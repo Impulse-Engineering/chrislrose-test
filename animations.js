@@ -1,15 +1,31 @@
 /*!
- * animations.js — Apple / Linear motion layer for chrisrose.com
- * No dependencies. Respects prefers-reduced-motion.
+ * animations.js — Full GSAP motion layer for chrisrose.com
+ * Requires: gsap.min.js + ScrollTrigger.min.js (loaded before this script)
+ * Respects prefers-reduced-motion.
  */
 (function () {
   'use strict';
 
-  var motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var isMobile = window.innerWidth <= 700;
+  // Remove no-js guard immediately so content is never invisible without JS
+  document.documentElement.classList.remove('no-js');
 
-  /* ── 1. Page-load progress bar ──────────────────────────────────
-   * Thin accent line across the top that fills on load.             */
+  // Register ScrollTrigger plugin
+  gsap.registerPlugin(ScrollTrigger);
+
+  var motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isMobile = window.matchMedia('(hover: none)').matches;
+
+  // If motion is disabled, make all animation targets visible and exit early
+  if (!motionOK) {
+    gsap.set([
+      '.anim-fade-up', '.hero-eyebrow', '.hero-word',
+      '.hero-text > p', '.hero-cta', '.hero-photo'
+    ], { opacity: 1, y: 0, x: 0, scale: 1 });
+    initNavEnhancements();
+    return;
+  }
+
+  /* ── 1. Page-load progress bar ───────────────────────────────── */
   var bar = document.createElement('div');
   bar.id = 'page-progress';
   document.body.prepend(bar);
@@ -19,19 +35,20 @@
     setTimeout(function () { bar.style.opacity = '0'; }, 900);
   });
 
-  /* ── 2. Cursor spotlight ────────────────────────────────────────
-   * Updates CSS custom properties used by body::after gradient.    */
-  if (motionOK && !isMobile) {
+  /* ── 2. Cursor spotlight ─────────────────────────────────────── */
+  if (!isMobile) {
     document.addEventListener('mousemove', function (e) {
       document.documentElement.style.setProperty('--cursor-x', e.clientX + 'px');
       document.documentElement.style.setProperty('--cursor-y', e.clientY + 'px');
     });
   }
 
-  /* ── 3. Nav: hide on scroll-down, reveal on scroll-up ──────────
-   * Classic Apple / Linear UX pattern.                             */
-  var nav = document.querySelector('nav');
-  if (nav) {
+  /* ── 3. Nav enhancements ─────────────────────────────────────── */
+  function initNavEnhancements() {
+    var nav = document.querySelector('nav');
+    if (!nav) return;
+
+    // Hide/reveal on scroll + scrolled state
     var prevScroll = 0;
     window.addEventListener('scroll', function () {
       var y = window.scrollY;
@@ -40,11 +57,88 @@
       } else {
         nav.classList.remove('nav-hidden');
       }
+      nav.classList.toggle('scrolled', y > 20);
       prevScroll = y < 0 ? 0 : y;
     }, { passive: true });
+
+    // Sliding pill indicator (desktop only)
+    var navLinks = document.querySelector('.nav-links');
+    if (!navLinks || isMobile) return;
+
+    var indicator = document.createElement('div');
+    indicator.className = 'nav-indicator';
+    navLinks.appendChild(indicator);
+
+    var activeLink = navLinks.querySelector('a.active');
+    if (activeLink) {
+      var activeLi = activeLink.closest('li');
+      indicator.style.left  = activeLi.offsetLeft + 'px';
+      indicator.style.width = activeLi.offsetWidth + 'px';
+    }
+
+    navLinks.querySelectorAll('li').forEach(function (li) {
+      li.addEventListener('mouseenter', function () {
+        indicator.style.left  = li.offsetLeft + 'px';
+        indicator.style.width = li.offsetWidth + 'px';
+      });
+    });
+
+    navLinks.addEventListener('mouseleave', function () {
+      var active = navLinks.querySelector('a.active');
+      if (active) {
+        var li = active.closest('li');
+        indicator.style.left  = li.offsetLeft + 'px';
+        indicator.style.width = li.offsetWidth + 'px';
+      }
+    });
   }
 
-  /* ── Helper: run fn when DOM is ready ──────────────────────────── */
+  initNavEnhancements();
+
+  /* ── 4. Hero entrance sequence ───────────────────────────────── */
+  function initHeroAnimation() {
+    var heroWords   = document.querySelectorAll('.hero-word');
+    var heroEyebrow = document.querySelector('.hero-eyebrow');
+    var heroP       = document.querySelector('.hero-text > p');
+    var heroCta     = document.querySelector('.hero-cta');
+    var heroPhoto   = document.querySelector('.hero-photo');
+
+    if (!heroWords.length) return;
+
+    var tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+    tl
+      // Eyebrow badge appears first — establishes context
+      .from(heroEyebrow, { opacity: 0, y: 12, duration: 0.55, delay: 0.1 })
+      // Headline words tip forward as they rise — the signature cinematic move
+      .from(heroWords, {
+        opacity: 0,
+        y: 28,
+        rotationX: 6,
+        duration: 0.65,
+        stagger: 0.09,
+        transformOrigin: '0% 50%'
+      }, '-=0.2')
+      // Body paragraph
+      .from(heroP, { opacity: 0, y: 16, duration: 0.5 }, '-=0.25')
+      // CTA buttons
+      .from(heroCta, { opacity: 0, y: 14, duration: 0.45 }, '-=0.2');
+
+    // Photo glides in from the right on a parallel track
+    if (heroPhoto) {
+      tl.from(heroPhoto, {
+        opacity: 0,
+        x: 24,
+        scale: 0.97,
+        duration: 0.7,
+        ease: 'power2.out'
+      }, 0.35);
+    }
+  }
+
+  window.addEventListener('load', initHeroAnimation);
+
+  /* ── Helper: run fn when DOM is ready ──────────────────────── */
   function onReady(fn) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', fn);
@@ -55,121 +149,85 @@
 
   onReady(function () {
 
-    /* ── 4. Hero entrance sequence ────────────────────────────────
-     * Staggered fade-up: eyebrow → h1 word-by-word → p → btns → photo */
-    var h1 = document.querySelector('.hero h1');
-    if (h1 && motionOK) {
-      var eyebrow = document.querySelector('.hero-eyebrow');
-      var heroP   = document.querySelector('.hero-text > p');
-      var btns    = Array.prototype.slice.call(document.querySelectorAll('.hero-cta .btn'));
-      var photo   = document.querySelector('.hero-photo');
-
-      /* Split h1 into per-word spans, preserving <br> tags */
-      h1.innerHTML = h1.innerHTML
-        .split(/(<br\s*\/?>)/gi)
-        .map(function (chunk) {
-          if (/<br/i.test(chunk)) return chunk;
-          return chunk.trim().split(/\s+/).filter(Boolean)
-            .map(function (w) { return '<span class="hero-word">' + w + '</span>'; })
-            .join(' ');
-        })
-        .join('');
-
-      var words = Array.prototype.slice.call(h1.querySelectorAll('.hero-word'));
-      var seq   = [eyebrow].concat(words, [heroP], btns, [photo]).filter(Boolean);
-
-      /* Hide all elements initially */
-      seq.forEach(function (el) {
-        el.style.opacity    = '0';
-        el.style.transform  = 'translateY(20px)';
-        el.style.transition = 'opacity .65s cubic-bezier(.16,1,.3,1), transform .65s cubic-bezier(.16,1,.3,1)';
-        el.style.willChange = 'opacity, transform';
-      });
-
-      /* Reveal each element on a staggered timer */
-      var t = 60;
-      seq.forEach(function (el) {
-        (function (el, delay) {
-          setTimeout(function () {
-            el.style.opacity   = '1';
-            el.style.transform = 'translateY(0)';
-          }, delay);
-        }(el, t));
-
-        if (el === eyebrow)                           t += 130;
-        else if (el.classList.contains('hero-word'))  t += 42;
-        else if (el === heroP)                        t += 110;
-        else                                          t += 90;
+    /* ── 5. Scroll reveal system ───────────────────────────────── */
+    if (document.querySelectorAll('.anim-fade-up').length) {
+      ScrollTrigger.batch('.anim-fade-up', {
+        onEnter: function (elements) {
+          gsap.from(elements, {
+            opacity: 0,
+            y: 32,
+            duration: 0.65,
+            stagger: 0.08,
+            ease: 'power3.out',
+            overwrite: true,
+            onComplete: function () {
+              // Release GPU compositing layer after animation completes
+              elements.forEach(function (el) {
+                el.style.willChange = 'auto';
+              });
+            }
+          });
+        },
+        start: 'top 88%',
+        once: true
       });
     }
 
-    /* ── 5. Scroll-triggered section reveals ─────────────────────
-     * IntersectionObserver fades-up content as user scrolls in.   */
-    if (motionOK && 'IntersectionObserver' in window) {
-      var revealSelector = [
-        '.section-header',
-        '.card',
-        '.contact-link',
-        '.contact-form',
-        '.about-photo-wrap',
-      ].join(', ');
-
-      var revealTargets = document.querySelectorAll(revealSelector);
-
-      Array.prototype.forEach.call(revealTargets, function (el) {
-        /* Skip anything already animated in the hero */
-        if (el.closest && el.closest('.hero')) return;
-
-        /* Stagger cards that share the same grid parent */
-        if (el.classList.contains('card')) {
-          var siblings = Array.prototype.slice.call(
-            el.parentElement.querySelectorAll('.card')
-          );
-          el.style.transitionDelay = (siblings.indexOf(el) * 90) + 'ms';
-        }
-
-        el.classList.add('reveal');
-      });
-
-      var observer = new IntersectionObserver(function (entries, obs) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            obs.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
-
-      Array.prototype.forEach.call(
-        document.querySelectorAll('.reveal'),
-        function (el) { observer.observe(el); }
-      );
-    }
-
-    /* ── 6. Card 3-D tilt on hover ───────────────────────────────
-     * Subtle perspective tilt that follows the mouse — tactile,    *
-     * purposeful, never dizzying.                                  */
-    if (motionOK && !isMobile) {
-      Array.prototype.forEach.call(document.querySelectorAll('.card'), function (card) {
+    /* ── 6. Card parallax tilt ─────────────────────────────────── */
+    if (!isMobile) {
+      document.querySelectorAll('.card').forEach(function (card) {
         card.addEventListener('mousemove', function (e) {
-          var r = card.getBoundingClientRect();
-          var x = (e.clientX - r.left)  / r.width  - 0.5;
-          var y = (e.clientY - r.top)   / r.height - 0.5;
-          card.style.transform  = 'translateY(-4px) rotateX(' + (-y * 5) + 'deg) rotateY(' + (x * 5) + 'deg)';
-          card.style.transition = 'transform .08s linear, box-shadow var(--transition), border-color var(--transition)';
+          var rect = card.getBoundingClientRect();
+          var x    = (e.clientX - rect.left) / rect.width  - 0.5;
+          var y    = (e.clientY - rect.top)  / rect.height - 0.5;
+
+          gsap.to(card, {
+            rotateX: -y * 3,
+            rotateY:  x * 3,
+            boxShadow:
+              (x * 12) + 'px ' + (y * 10 + 8) + 'px 32px rgba(0,0,0,0.6), ' +
+              '0 0 40px rgba(88,166,255,' + (0.04 + Math.abs(x) * 0.06) + ')',
+            duration: 0.3,
+            ease: 'power1.out',
+            transformPerspective: 800,
+            transformOrigin: 'center center'
+          });
         });
 
         card.addEventListener('mouseleave', function () {
-          card.style.transform  = '';
-          card.style.transition = 'transform .5s cubic-bezier(.16,1,.3,1), box-shadow var(--transition), border-color var(--transition)';
+          gsap.to(card, {
+            rotateX: 0,
+            rotateY: 0,
+            boxShadow: 'var(--shadow-sm)',
+            duration: 0.4,
+            ease: 'power2.out'
+          });
         });
       });
     }
 
-    /* ── 7. Hero photo ring pulse ─────────────────────────────────
-     * Slow, breathing box-shadow animation on the circular photo.  */
+    /* ── 7. Bento cell cascade animation ───────────────────────── */
+    if (document.querySelectorAll('.bento-cell').length) {
+      ScrollTrigger.batch('.bento-cell', {
+        onEnter: function (elements) {
+          gsap.from(elements, {
+            opacity: 0,
+            y: 20,
+            scale: 0.96,
+            duration: 0.45,
+            stagger: 0.04,
+            ease: 'power2.out',
+            overwrite: true
+          });
+        },
+        start: 'top 90%',
+        once: true
+      });
+    }
+
+    /* ── 8. Hero photo ring pulse ──────────────────────────────── */
     var heroPhoto = document.querySelector('.hero-photo .photo-placeholder');
-    if (heroPhoto && motionOK) {
+    if (heroPhoto) {
       heroPhoto.classList.add('photo-ring-pulse');
     }
 
