@@ -1546,16 +1546,11 @@ body.glitch-active::after {
 }
 
 .hardware-photo-wrap {
-  background: #f5f5f7;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 170px;
   padding: 1.5rem;
-}
-
-[data-theme="dark"] .hardware-photo-wrap {
-  background: #1c1c1e;
 }
 
 .hardware-photo {
