@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 </head>
 <body>
 
@@ -28,7 +30,7 @@
     <div class="container">
       <section class="section">
 
-        <div class="section-header">
+        <div class="section-header anim-fade-up">
           <span class="section-eyebrow">// about</span>
           <h2>Background &amp; Experience</h2>
         </div>
@@ -36,7 +38,7 @@
         <div class="about-layout">
 
           <!-- Photo Sidebar -->
-          <div class="about-photo-wrap">
+          <div class="about-photo-wrap anim-fade-up">
             <img src="images/chris-rose.jpg" alt="Chris Rose" class="photo-placeholder" />
 
             <!-- Quick Facts -->
@@ -79,17 +81,17 @@
 
             <h2>Skills &amp; Expertise</h2>
             <p>Areas I work in every day:</p>
-            <div class="skills-list">
-              <span class="tag">Cybersecurity Strategy</span>
-              <span class="tag">Network Architecture</span>
-              <span class="tag">IT Leadership</span>
-              <span class="tag">Vendor Management</span>
-              <span class="tag">SD-WAN</span>
-              <span class="tag">Zero Trust</span>
-              <span class="tag">Cloud Infrastructure</span>
-              <span class="tag">Risk Management</span>
-              <span class="tag">Firewall &amp; Security</span>
-              <span class="tag">Business Economics</span>
+            <div class="bento-grid">
+              <div class="bento-cell anim-fade-up">Cybersecurity Strategy</div>
+              <div class="bento-cell anim-fade-up">Network Architecture</div>
+              <div class="bento-cell anim-fade-up">IT Leadership</div>
+              <div class="bento-cell anim-fade-up">Vendor Management</div>
+              <div class="bento-cell anim-fade-up">SD-WAN</div>
+              <div class="bento-cell anim-fade-up">Zero Trust</div>
+              <div class="bento-cell anim-fade-up">Cloud Infrastructure</div>
+              <div class="bento-cell anim-fade-up">Risk Management</div>
+              <div class="bento-cell anim-fade-up">Firewall &amp; Security</div>
+              <div class="bento-cell anim-fade-up">Business Economics</div>
             </div>
 
             <h2>Recognition</h2>
@@ -97,15 +99,15 @@
 
             <h2>Values</h2>
             <div class="grid-3" style="margin-top:1rem;">
-              <div class="card">
+              <div class="card anim-fade-up">
                 <h3>Reliability</h3>
                 <p>Building infrastructure and teams that organizations can count on, every day.</p>
               </div>
-              <div class="card">
+              <div class="card anim-fade-up">
                 <h3>Security</h3>
                 <p>Treating security as foundational to every design decision, not an afterthought.</p>
               </div>
-              <div class="card">
+              <div class="card anim-fade-up">
                 <h3>Partnership</h3>
                 <p>Working alongside clients and vendors to find the right solutions, not just the available ones.</p>
               </div>

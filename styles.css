@@ -169,6 +169,26 @@ main {
   background: var(--color-accent);
   color: #0d1117;
   border-color: var(--color-accent);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255,255,255,0.16) 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  transition: transform 500ms ease;
+}
+
+.btn-primary:hover::after {
+  transform: translateX(100%);
 }
 
 .btn-primary:hover {
@@ -264,13 +284,19 @@ main {
   border-radius: var(--radius);
   padding: 1.75rem;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+  will-change: transform, box-shadow;
+  transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1),
+              transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 280ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-accent);
-  transform: translateY(-3px);
-  border-color: rgba(88, 166, 255, 0.3);
+  box-shadow:
+    0 0 0 1px rgba(88,166,255,0.2),
+    0 8px 32px rgba(0,0,0,0.6),
+    0 0 40px rgba(88,166,255,0.07);
+  transform: translateY(-5px);
+  border-color: rgba(88, 166, 255, 0.35);
 }
 
 .card h3 { margin-bottom: 0.5rem; }
@@ -330,6 +356,36 @@ main {
   margin-top: 1rem;
 }
 
+/* Bento grid for skills */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.bento-cell {
+  background: rgba(28, 35, 51, 0.7);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  text-align: center;
+  transition: background 200ms ease, border-color 200ms ease, transform 200ms ease;
+}
+
+.bento-cell:hover {
+  background: rgba(31, 58, 95, 0.5);
+  border-color: rgba(88, 166, 255, 0.3);
+  transform: translateY(-2px);
+}
+
 .about-content h2 { margin: 2.5rem 0 1rem; }
 .about-content h2:first-child { margin-top: 0; }
 .about-content p + p { margin-top: 0.75rem; }
@@ -373,12 +429,14 @@ main {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background var(--transition), border-color var(--transition);
+  transition: background var(--transition), border-color var(--transition),
+              transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .contact-link:hover .contact-link-icon {
   background: var(--color-accent-dim);
   border-color: rgba(88, 166, 255, 0.3);
+  transform: scale(1.08);
 }
 
 /* Contact Form */
@@ -470,10 +528,31 @@ footer {
 .footer-links a:hover { color: var(--color-accent); }
 
 /* =============================================================
-   ANIMATION LAYER — Apple / Linear motion system
+   ANIMATION LAYER — GSAP / Apple / Linear motion system
    ============================================================= */
 
-/* ── Page-load progress bar ────────────────────────────────── */
+/* ── Animated gradient mesh background ──────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 20%, rgba(88,166,255,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 80% 70%, rgba(88,166,255,0.03) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(88,166,255,0.025) 0%, transparent 70%);
+  animation: meshShift 18s ease-in-out infinite alternate;
+}
+
+@keyframes meshShift {
+  0%   { opacity: 0.6; transform: scale(1)    translateX(0px); }
+  33%  { opacity: 0.9; transform: scale(1.04) translateX(12px); }
+  66%  { opacity: 0.7; transform: scale(0.98) translateX(-8px); }
+  100% { opacity: 1.0; transform: scale(1.02) translateX(6px); }
+}
+
+/* ── Page-load progress bar ─────────────────────────────────── */
 #page-progress {
   position: fixed;
   top: 0; left: 0;
@@ -506,51 +585,37 @@ body::after {
 
 /* ── Nav: smooth hide / reveal on scroll ────────────────────── */
 nav {
-  transition: transform .35s cubic-bezier(.16, 1, .3, 1);
+  transition: transform .35s cubic-bezier(.16, 1, .3, 1),
+              background .2s ease,
+              border-bottom-color .2s ease;
 }
 
 nav.nav-hidden {
   transform: translateY(-100%);
 }
 
-/* ── Nav animated underline indicator ───────────────────────── */
-.nav-links a {
-  display: inline-block;
+nav.scrolled {
+  background: rgba(13, 17, 23, 0.96);
+  border-bottom-color: var(--color-border);
+}
+
+/* ── Nav sliding pill indicator (JS-injected) ───────────────── */
+.nav-links {
   position: relative;
 }
 
-.nav-links a::after {
-  content: '';
+.nav-indicator {
   position: absolute;
-  left: 0; right: 0;
-  bottom: -3px;
+  bottom: -1px;
   height: 2px;
   background: var(--color-accent);
-  border-radius: 2px;
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform .3s cubic-bezier(.16, 1, .3, 1);
+  border-radius: 2px 2px 0 0;
+  transition: left 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              width 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
 }
 
-.nav-links a:hover::after,
-.nav-links a.active::after {
-  transform: scaleX(1);
-}
-
-/* ── Scroll reveal ───────────────────────────────────────────── */
-.reveal {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity .75s cubic-bezier(.16, 1, .3, 1),
-              transform .75s cubic-bezier(.16, 1, .3, 1);
-}
-
-.reveal.visible {
-  opacity: 1;
-  transform: none;
-}
-
-/* ── Hero word spans (split by JS) ──────────────────────────── */
+/* ── Hero word spans ─────────────────────────────────────────── */
 .hero-word {
   display: inline-block;
 }
@@ -582,8 +647,41 @@ nav.nav-hidden {
   transform-style: preserve-3d;
 }
 
+/* ── GSAP animation base states ─────────────────────────────── */
+/* Elements start invisible; GSAP animates them in.
+   The .no-js class on <html> ensures content is visible if JS fails. */
+.anim-fade-up {
+  opacity: 0;
+  transform: translateY(32px);
+}
+
+.no-js .anim-fade-up,
+.no-js .anim-fade-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Reduced motion: show everything immediately ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .anim-fade-up {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 /* Responsive */
 @media (max-width: 700px) {
+  .nav-indicator { display: none; }
+  .bento-grid { grid-template-columns: repeat(2, 1fr); }
+
   .hero {
     flex-direction: column-reverse;
     text-align: center;
