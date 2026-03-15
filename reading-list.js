@@ -8,7 +8,7 @@
 
   // ── Config ────────────────────────────────────────────────────
   // Fill in your Supabase project URL and anon key (Settings → API in Supabase dashboard)
-  var SUPABASE_URL  = 'https://ownqyyfgferczpdgihgr.supabase.com';
+  var SUPABASE_URL  = 'https://ownqyyfgferczpdgihgr.supabase.co';
   var SUPABASE_ANON = 'sb_publishable_RPJSQlVO4isbKnZve8NlWg_55EO350Y';
   var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
