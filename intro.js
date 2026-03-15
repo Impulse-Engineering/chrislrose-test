@@ -34,6 +34,7 @@
   var pillBlue      = overlay.querySelector('.intro-pill--blue');
   var skipEl        = overlay.querySelector('.intro-skip');
   var matrixCanvas  = document.getElementById('intro-matrix-canvas');
+  var diveCanvas    = document.getElementById('intro-dive-canvas');
   var glitchFlash   = overlay.querySelector('.intro-glitch-flash');
 
   // ── Matrix rain (intro-specific, smaller scale) ────────────
@@ -116,40 +117,235 @@
     tick();
   }
 
+  // ── 3D Matrix dive (fly-through code columns) ─────────────
+  // Inspired by The Matrix (1999) opening title sequence where
+  // the camera zooms through cascading green code.
+  var diveCtx, diveRaf, diveColumns, diveStartTime;
+  var DIVE_DURATION = 3200; // ms total dive animation
+
+  function initDive() {
+    if (!diveCanvas) return;
+    diveCtx = diveCanvas.getContext('2d');
+    diveCanvas.width  = window.innerWidth;
+    diveCanvas.height = window.innerHeight;
+
+    var w = diveCanvas.width;
+    var h = diveCanvas.height;
+    var cx = w / 2;
+    var cy = h / 2;
+
+    // Create columns of code at different 3D depths
+    diveColumns = [];
+    var numColumns = 120;
+    for (var i = 0; i < numColumns; i++) {
+      // Spread columns in a circle around center, at various depths
+      var angle = Math.random() * Math.PI * 2;
+      var radius = 30 + Math.random() * 250;
+      diveColumns.push({
+        // 2D position offset from center (in "world" coords)
+        wx: Math.cos(angle) * radius,
+        wy: Math.sin(angle) * radius,
+        // Depth (z) — starts far away, rushes toward camera
+        z: 200 + Math.random() * 800,
+        // Each column has its own set of characters
+        chars: [],
+        charCount: 8 + Math.floor(Math.random() * 16),
+        speed: 0.5 + Math.random() * 1.5, // character scroll speed
+        offset: Math.random() * 100
+      });
+
+      // Pre-generate characters for each column
+      var col = diveColumns[diveColumns.length - 1];
+      for (var j = 0; j < col.charCount; j++) {
+        col.chars.push({
+          ch: String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96)),
+          brightness: Math.random()
+        });
+      }
+    }
+
+    diveStartTime = performance.now();
+  }
+
+  function drawDive(now) {
+    var elapsed = now - diveStartTime;
+    var progress = Math.min(elapsed / DIVE_DURATION, 1);
+
+    var w = diveCanvas.width;
+    var h = diveCanvas.height;
+    var cx = w / 2;
+    var cy = h / 2;
+
+    // Gradually darken trail — faster fade at start, slower at end for streaks
+    var trailAlpha = 0.12 + progress * 0.15;
+    diveCtx.fillStyle = 'rgba(0, 0, 0, ' + trailAlpha + ')';
+    diveCtx.fillRect(0, 0, w, h);
+
+    // Camera speed accelerates (easeIn)
+    var camSpeed = 0.3 + progress * progress * 4.0;
+
+    // Vignette / radial glow at center as we approach end
+    if (progress > 0.6) {
+      var glowAlpha = (progress - 0.6) / 0.4 * 0.3;
+      var grad = diveCtx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.5);
+      grad.addColorStop(0, 'rgba(0, 255, 65, ' + glowAlpha + ')');
+      grad.addColorStop(0.3, 'rgba(0, 255, 65, ' + (glowAlpha * 0.3) + ')');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      diveCtx.fillStyle = grad;
+      diveCtx.fillRect(0, 0, w, h);
+    }
+
+    for (var i = 0; i < diveColumns.length; i++) {
+      var col = diveColumns[i];
+
+      // Move column toward camera (decrease z)
+      col.z -= camSpeed * (1 + col.speed);
+
+      // If column passed camera, respawn it far away
+      if (col.z <= 1) {
+        col.z = 600 + Math.random() * 400;
+        var angle = Math.random() * Math.PI * 2;
+        var radius = 30 + Math.random() * 250;
+        col.wx = Math.cos(angle) * radius;
+        col.wy = Math.sin(angle) * radius;
+        // Randomize characters
+        for (var r = 0; r < col.chars.length; r++) {
+          col.chars[r].ch = String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
+        }
+      }
+
+      // Project 3D → 2D (perspective)
+      var perspective = 300 / col.z;
+      var sx = cx + col.wx * perspective;
+      var sy = cy + col.wy * perspective;
+
+      // Size scales with perspective
+      var fontSize = Math.max(6, Math.min(28, 14 * perspective));
+
+      // Brightness based on depth — closer = brighter
+      var depthBright = Math.min(1, perspective * 1.5);
+
+      // Cycle characters occasionally
+      if (Math.random() < 0.03) {
+        var ri = Math.floor(Math.random() * col.chars.length);
+        col.chars[ri].ch = String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
+      }
+
+      diveCtx.font = fontSize + 'px "JetBrains Mono", monospace';
+      diveCtx.textAlign = 'center';
+
+      // Draw each character in the column vertically
+      var charSpacing = fontSize * 1.2;
+      var scrollOffset = (elapsed * 0.002 * col.speed + col.offset) % col.charCount;
+
+      for (var j = 0; j < col.charCount; j++) {
+        var ci = (j + Math.floor(scrollOffset)) % col.charCount;
+        var charY = sy + (j - col.charCount / 2) * charSpacing * perspective * 0.5;
+
+        // Skip if off screen
+        if (charY < -20 || charY > h + 20 || sx < -20 || sx > w + 20) continue;
+
+        var bright = depthBright * col.chars[ci].brightness;
+
+        // Lead character (brightest) is white-green, rest are green
+        if (j === 0) {
+          var wb = Math.min(1, bright * 1.5);
+          diveCtx.fillStyle = 'rgba(180, 255, 180, ' + wb + ')';
+          diveCtx.shadowColor = '#00ff41';
+          diveCtx.shadowBlur = 8;
+        } else {
+          var g = Math.floor(100 + bright * 155);
+          diveCtx.fillStyle = 'rgba(0, ' + g + ', 65, ' + bright + ')';
+          diveCtx.shadowColor = 'transparent';
+          diveCtx.shadowBlur = 0;
+        }
+
+        diveCtx.fillText(col.chars[ci].ch, sx, charY);
+      }
+      diveCtx.shadowBlur = 0;
+    }
+
+    // Final flash as we "arrive"
+    if (progress >= 0.92) {
+      var flashAlpha = (progress - 0.92) / 0.08;
+      diveCtx.fillStyle = 'rgba(255, 255, 255, ' + (flashAlpha * flashAlpha) + ')';
+      diveCtx.fillRect(0, 0, w, h);
+    }
+
+    if (progress < 1) {
+      diveRaf = requestAnimationFrame(drawDive);
+    } else {
+      // Dive complete — reveal site
+      revealSite();
+    }
+  }
+
+  function startDive() {
+    initDive();
+    gsap.to(diveCanvas, { opacity: 1, duration: 0.3 });
+    diveRaf = requestAnimationFrame(drawDive);
+  }
+
+  function stopDive() {
+    if (diveRaf) { cancelAnimationFrame(diveRaf); diveRaf = null; }
+  }
+
+  // ── Reveal site (called after dive or directly for red pill) ──
+  function revealSite() {
+    stopDive();
+    gsap.to(overlay, {
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power2.in',
+      onComplete: function () {
+        overlay.classList.add('intro-hidden');
+        document.body.classList.remove('intro-active');
+        window.introComplete = true;
+        window.dispatchEvent(new CustomEvent('intro-done'));
+      }
+    });
+  }
+
   // ── Finish / reveal site ───────────────────────────────────
   function finishIntro(chosenPill) {
     if (finished) return;
     finished = true;
     stopIntroMatrix();
 
-    // If red pill was chosen, do a brief matrix rain intensify then proceed
-    var exitDelay = chosenPill === 'red' ? 600 : 200;
+    if (chosenPill === 'blue') {
+      // Hide pills and wake text, then launch the 3D dive
+      gsap.to([wakeText, pills], { opacity: 0, duration: 0.3 });
 
-    // Glitch flash
-    if (glitchFlash) {
-      gsap.to(glitchFlash, {
-        opacity: 0.8,
-        duration: 0.08,
-        yoyo: true,
-        repeat: 3,
-        ease: 'steps(1)'
-      });
+      // Intensify the 2D rain briefly before dive takes over
+      if (matrixCanvas) {
+        gsap.to(matrixCanvas, { opacity: 0.5, duration: 0.3 });
+      }
+
+      setTimeout(function () {
+        // Kill 2D rain, start 3D dive
+        stopIntroMatrix();
+        if (matrixCanvas) gsap.to(matrixCanvas, { opacity: 0, duration: 0.4 });
+        startDive();
+      }, 400);
+
+    } else {
+      // Red pill path — same as before (chaos sequence handles its own exit)
+      var exitDelay = 600;
+
+      if (glitchFlash) {
+        gsap.to(glitchFlash, {
+          opacity: 0.8,
+          duration: 0.08,
+          yoyo: true,
+          repeat: 3,
+          ease: 'steps(1)'
+        });
+      }
+
+      setTimeout(function () {
+        revealSite();
+      }, exitDelay);
     }
-
-    setTimeout(function () {
-      // Fade out overlay
-      gsap.to(overlay, {
-        opacity: 0,
-        duration: 0.5,
-        ease: 'power2.in',
-        onComplete: function () {
-          overlay.classList.add('intro-hidden');
-          document.body.classList.remove('intro-active');
-          window.introComplete = true;
-          window.dispatchEvent(new CustomEvent('intro-done'));
-        }
-      });
-    }, exitDelay);
   }
 
   // ── Skip handler (active only before pills appear) ─────────
@@ -159,7 +355,11 @@
     if (finished || !skipEnabled) return;
     skipped = true;
     if (tl) tl.progress(1);
-    finishIntro('blue');
+    // Skip goes straight to site — no dive animation
+    finished = true;
+    stopIntroMatrix();
+    stopDive();
+    revealSite();
   }
 
   function disableSkip() {

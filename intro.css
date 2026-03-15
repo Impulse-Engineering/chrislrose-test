@@ -228,6 +228,15 @@ body.intro-active {
   pointer-events: none;
 }
 
+/* ── Matrix dive canvas (3D fly-through) ──────────────────── */
+#intro-dive-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ── Glitch flash for transition ───────────────────────────── */
 .intro-glitch-flash {
   position: absolute;
