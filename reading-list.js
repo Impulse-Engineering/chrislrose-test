@@ -8,7 +8,7 @@
 
   // ── Config ────────────────────────────────────────────────────
   var REPO       = 'chrislrosesb/test';
-  var BRANCH     = 'main';
+  var BRANCH     = 'Main';
   var RAW_BASE   = 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/';
   var API_URL    = 'https://api.github.com/repos/' + REPO + '/contents/links.json';
   var ALLORIGINS = 'https://api.allorigins.win/get?url=';
