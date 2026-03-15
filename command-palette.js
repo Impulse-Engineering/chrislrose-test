@@ -39,7 +39,8 @@
     { section: 'Navigate', label: 'Home',            hint: 'index.html',   action: function () { nav('index.html'); } },
     { section: 'Navigate', label: 'About',           hint: 'about.html',   action: function () { nav('about.html'); } },
     { section: 'Navigate', label: 'Contact',         hint: 'contact.html', action: function () { nav('contact.html'); } },
-    { section: 'Navigate', label: 'Uses',            hint: 'uses.html',    action: function () { nav('uses.html'); } },
+    { section: 'Navigate', label: 'Uses',            hint: 'uses.html',          action: function () { nav('uses.html'); } },
+    { section: 'Navigate', label: 'Reading List',    hint: 'reading-list.html',  action: function () { nav('reading-list.html'); } },
     // Jump to sections
     { section: 'Jump to',  label: 'What I Do',       hint: 'home',         action: function () { jumpTo('index.html', 'what-i-do'); } },
     { section: 'Jump to',  label: 'Expertise',       hint: 'home',         action: function () { jumpTo('index.html', 'expertise'); } },
