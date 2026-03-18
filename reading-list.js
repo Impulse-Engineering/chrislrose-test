@@ -48,6 +48,7 @@
     var curateBtnEl      = document.getElementById('filter-curate-btn');
     var selectionBar     = document.getElementById('selection-action-bar');
     var selectionCountEl = document.getElementById('selection-count');
+    var selectionRecipientInput = document.getElementById('selection-recipient');
     var selectionMsgInput  = document.getElementById('selection-message');
     var selectionCreateBtn = document.getElementById('selection-create-btn');
     var selectionCancelBtn = document.getElementById('selection-cancel-btn');
@@ -253,6 +254,7 @@
       document.body.classList.add('selection-mode');
       curateBtnEl.classList.add('active');
       selectionBar.removeAttribute('hidden');
+      selectionRecipientInput.value = '';
       selectionMsgInput.value = '';
       updateSelectionBar();
     }
@@ -280,15 +282,17 @@
         showToast('Select at least one link first', 'error');
         return;
       }
-      var id      = Date.now().toString(36);
-      var message = selectionMsgInput.value.trim() || null;
-      var ids     = Array.from(state.selectedIds);
+      var id        = Date.now().toString(36);
+      var recipient = selectionRecipientInput.value.trim() || null;
+      var message   = selectionMsgInput.value.trim() || null;
+      var ids       = Array.from(state.selectedIds);
 
       selectionCreateBtn.disabled    = true;
       selectionCreateBtn.textContent = 'Creating\u2026';
 
       db.from('collections').insert({
         id:         id,
+        recipient:  recipient,
         message:    message,
         link_ids:   ids,
         created_at: new Date().toISOString()
@@ -344,7 +348,7 @@
         '<div class="collection-banner">' +
           '<span class="collection-banner-icon">\uD83D\uDCDA</span>' +
           '<div>' +
-            '<div class="collection-banner-title">Chris\u2019s picks for you</div>' +
+            '<div class="collection-banner-title">Chris\u2019s picks for ' + (collection.recipient ? escHtml(collection.recipient) : 'you') + '</div>' +
             '<div class="collection-banner-meta">' +
               count + ' article' + (count !== 1 ? 's' : '') +
               (dateStr ? ' \u00b7 ' + dateStr : '') +
