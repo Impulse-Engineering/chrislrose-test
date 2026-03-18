@@ -25,7 +25,11 @@
     searchQuery:    '',
     isAdmin:        false,
     editingId:      null,
-    starValue:      3
+    starValue:      3,
+    selectionMode:  false,
+    selectedIds:    new Set(),
+    collectionId:   null,
+    collectionData: null
   };
 
   // ── Boot ──────────────────────────────────────────────────────
@@ -40,7 +44,14 @@
     var adminFabIcon  = document.getElementById('admin-fab-icon');
     var adminBadge    = document.getElementById('admin-badge');
     var adminAddBtn   = document.getElementById('admin-add-btn');
-    var filterShuffle = document.getElementById('filter-shuffle-btn');
+    var filterShuffle    = document.getElementById('filter-shuffle-btn');
+    var curateBtnEl      = document.getElementById('filter-curate-btn');
+    var selectionBar     = document.getElementById('selection-action-bar');
+    var selectionCountEl = document.getElementById('selection-count');
+    var selectionMsgInput  = document.getElementById('selection-message');
+    var selectionCreateBtn = document.getElementById('selection-create-btn');
+    var selectionCancelBtn = document.getElementById('selection-cancel-btn');
+    var collectionBannerEl = document.getElementById('collection-banner');
     var settingsPanel = document.getElementById('settings-panel');
     var settingsSave  = document.getElementById('settings-save-btn');
     var settingsLock  = document.getElementById('settings-lock-btn');
@@ -81,18 +92,39 @@
       var linksQuery = db.from('links').select('*').order('saved_at', { ascending: false });
       if (!state.isAdmin) linksQuery = linksQuery.eq('private', false);
 
-      // Pre-select category from URL param (for shareable collection links)
-      var urlCat = new URLSearchParams(window.location.search).get('category');
-      if (urlCat) state.activeCategory = urlCat;
+      var params = new URLSearchParams(window.location.search);
+      var urlCat        = params.get('category');
+      var urlCollection = params.get('collection');
+      if (urlCat && !urlCollection) state.activeCategory = urlCat;
+      if (urlCollection) state.collectionId = urlCollection;
 
-      Promise.all([
+      var queries = [
         linksQuery,
         db.from('categories').select('name, sort_order').order('sort_order')
-      ]).then(function (results) {
+      ];
+      if (state.collectionId) {
+        queries.push(db.from('collections').select('*').eq('id', state.collectionId).single());
+      }
+
+      Promise.all(queries).then(function (results) {
         var linksRes = results[0], catsRes = results[1];
         if (linksRes.error) throw linksRes.error;
         state.allLinks   = linksRes.data || [];
         state.categories = (catsRes.data || []).map(function (c) { return c.name; });
+
+        // Collection view mode
+        if (state.collectionId && results[2] && !results[2].error && results[2].data) {
+          state.collectionData = results[2].data;
+          document.body.classList.add('collection-mode');
+          renderCollectionBanner(results[2].data);
+          var idOrder = results[2].data.link_ids || [];
+          state.filtered = idOrder
+            .map(function (id) { return state.allLinks.find(function (l) { return l.id === id; }); })
+            .filter(Boolean);
+          renderGrid();
+          return;
+        }
+
         buildFilterTabs();
         buildCategorySelect();
         applyFilters();
@@ -205,6 +237,128 @@
       card.classList.add('card-shuffle-highlight');
       setTimeout(function () { card.classList.remove('card-shuffle-highlight'); }, 1800);
     });
+
+    // ── Curate / selection mode ──────────────────────────────────
+    curateBtnEl.addEventListener('click', function () {
+      if (state.selectionMode) {
+        exitSelectionMode();
+      } else {
+        enterSelectionMode();
+      }
+    });
+
+    function enterSelectionMode() {
+      state.selectionMode = true;
+      state.selectedIds   = new Set();
+      document.body.classList.add('selection-mode');
+      curateBtnEl.classList.add('active');
+      selectionBar.removeAttribute('hidden');
+      selectionMsgInput.value = '';
+      updateSelectionBar();
+    }
+
+    function exitSelectionMode() {
+      state.selectionMode = false;
+      state.selectedIds   = new Set();
+      document.body.classList.remove('selection-mode');
+      curateBtnEl.classList.remove('active');
+      selectionBar.setAttribute('hidden', '');
+      document.querySelectorAll('.link-card.card-selected').forEach(function (c) {
+        c.classList.remove('card-selected');
+      });
+    }
+
+    function updateSelectionBar() {
+      var n = state.selectedIds.size;
+      selectionCountEl.textContent = n + ' link' + (n !== 1 ? 's' : '') + ' selected';
+    }
+
+    selectionCancelBtn.addEventListener('click', exitSelectionMode);
+
+    selectionCreateBtn.addEventListener('click', function () {
+      if (state.selectedIds.size === 0) {
+        showToast('Select at least one link first', 'error');
+        return;
+      }
+      var id      = Date.now().toString(36);
+      var message = selectionMsgInput.value.trim() || null;
+      var ids     = Array.from(state.selectedIds);
+
+      selectionCreateBtn.disabled    = true;
+      selectionCreateBtn.textContent = 'Creating\u2026';
+
+      db.from('collections').insert({
+        id:         id,
+        message:    message,
+        link_ids:   ids,
+        created_at: new Date().toISOString()
+      }).then(function (res) {
+        selectionCreateBtn.disabled    = false;
+        selectionCreateBtn.textContent = 'Create share link';
+        if (res.error) {
+          showToast('Failed: ' + res.error.message, 'error');
+          return;
+        }
+        var shareUrl = window.location.origin + window.location.pathname + '?collection=' + id;
+        exitSelectionMode();
+        showShareModal(shareUrl);
+      });
+    });
+
+    // ── Share modal ───────────────────────────────────────────────
+    function showShareModal(url) {
+      var shareModal   = document.getElementById('share-modal');
+      var shareUrlInput = document.getElementById('share-url-input');
+      var shareCopyBtn = document.getElementById('share-copy-btn');
+      var shareDoneBtn = document.getElementById('share-done-btn');
+      var shareBackdrop = document.getElementById('share-modal-backdrop');
+      var shareClose   = document.getElementById('share-modal-close');
+
+      shareUrlInput.value = url;
+      shareModal.removeAttribute('hidden');
+      setTimeout(function () { shareUrlInput.select(); }, 50);
+
+      shareCopyBtn.onclick = function () {
+        navigator.clipboard.writeText(url).then(function () {
+          showToast('Link copied!', 'success');
+        }).catch(function () {
+          showToast('Could not copy \u2014 copy it manually', 'error');
+        });
+      };
+
+      function closeShareModal() { shareModal.setAttribute('hidden', ''); }
+      shareDoneBtn.onclick  = closeShareModal;
+      shareClose.onclick    = closeShareModal;
+      shareBackdrop.onclick = closeShareModal;
+    }
+
+    // ── Collection banner ─────────────────────────────────────────
+    function renderCollectionBanner(collection) {
+      var count   = (collection.link_ids || []).length;
+      var dateStr = '';
+      try {
+        dateStr = new Date(collection.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+      } catch (e) {}
+
+      var html =
+        '<div class="collection-banner">' +
+          '<span class="collection-banner-icon">\uD83D\uDCDA</span>' +
+          '<div>' +
+            '<div class="collection-banner-title">Chris\u2019s picks for you</div>' +
+            '<div class="collection-banner-meta">' +
+              count + ' article' + (count !== 1 ? 's' : '') +
+              (dateStr ? ' \u00b7 ' + dateStr : '') +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+      if (collection.message) {
+        html += '<div class="collection-message">' + escHtml(collection.message) + '</div>';
+      }
+
+      collectionBannerEl.innerHTML = html;
+      collectionBannerEl.removeAttribute('hidden');
+    }
 
     // ── Render grid ─────────────────────────────────────────────
     function renderGrid() {
@@ -341,6 +495,22 @@
         e.preventDefault();
         e.stopPropagation();
         confirmDelete(link.id);
+      });
+
+      // Selection mode — clicking the card toggles its selected state
+      card.addEventListener('click', function (e) {
+        if (!state.selectionMode) return;
+        // Prevent navigating the link while selecting
+        var anchor = e.target.tagName === 'A' ? e.target : e.target.closest('a');
+        if (anchor) e.preventDefault();
+        if (state.selectedIds.has(link.id)) {
+          state.selectedIds.delete(link.id);
+          card.classList.remove('card-selected');
+        } else {
+          state.selectedIds.add(link.id);
+          card.classList.add('card-selected');
+        }
+        updateSelectionBar();
       });
 
       return card;
@@ -836,6 +1006,9 @@
       if (e.key !== 'Escape') return;
       if (!authModal.hasAttribute('hidden'))  { closeAuthModal();  return; }
       if (!linkModal.hasAttribute('hidden'))  { closeLinkModal();  return; }
+      var shareModal = document.getElementById('share-modal');
+      if (shareModal && !shareModal.hasAttribute('hidden')) { shareModal.setAttribute('hidden', ''); return; }
+      if (state.selectionMode) { exitSelectionMode(); return; }
       if (settingsPanel.classList.contains('open')) {
         settingsPanel.classList.remove('open');
       }
