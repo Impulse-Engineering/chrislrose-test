@@ -407,10 +407,11 @@
           settingsPanel.classList.remove('open');
         } else {
           renderCategoryChips();
-          // Build bookmarklet href
+          // Build bookmarklet href — use current page URL so it works on any host
+          var dest = location.href.split('?')[0];
           var bl = 'javascript:(function(){' +
             "var u=encodeURIComponent(location.href);" +
-            "window.open('https://chrislrosesb.github.io/test/reading-list.html?add='+u,'_blank');" +
+            "window.open('" + dest + "?add='+u,'_blank');" +
             '})();';
           bookmarklet.href = bl;
           settingsPanel.classList.add('open');
