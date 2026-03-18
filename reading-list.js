@@ -811,12 +811,12 @@
 
     // ── Init ─────────────────────────────────────────────────────
     loadData();
-    checkAddParam();
-    // Restore admin session if Supabase still has a valid token
+    // Restore admin session if Supabase still has a valid token, then check ?add= param
     db.auth.getSession().then(function (res) {
       if (res.data && res.data.session) {
         activateAdmin(true);
       }
+      checkAddParam();
     });
 
   }); // end DOMContentLoaded
