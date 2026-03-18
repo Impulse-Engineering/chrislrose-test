@@ -107,13 +107,42 @@ nav {
 
 .nav-logo {
   font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
-  color: var(--color-text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: var(--color-bg);
+  background: var(--color-accent);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background var(--transition), transform var(--transition);
 }
 
-.nav-logo:hover { color: var(--color-accent); }
+.nav-logo:hover {
+  background: var(--color-accent-light);
+  transform: scale(1.05);
+  color: var(--color-bg);
+}
+
+/* Hamburger button — hidden on desktop */
+.nav-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--color-text-muted);
+  transition: color var(--transition);
+}
+.nav-hamburger:hover { color: var(--color-text); }
+
+.nav-hamburger svg {
+  display: block;
+}
 
 .nav-links {
   display: flex;
@@ -674,6 +703,43 @@ nav.scrolled {
 
 /* Responsive */
 @media (max-width: 700px) {
+  .nav-hamburger { display: block; }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    gap: 0;
+    background: rgba(13, 17, 23, 0.96);
+    backdrop-filter: blur(12px) saturate(1.5);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    border-bottom: 1px solid var(--color-border-muted);
+    padding: 0.5rem 0;
+    z-index: 99;
+  }
+
+  [data-theme="light"] .nav-links {
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  .nav-links.nav-open {
+    display: flex;
+  }
+
+  .nav-links li a {
+    display: block;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .nav-links li a:hover,
+  .nav-links li a.active {
+    background: var(--color-bg-alt);
+  }
+
   .nav-indicator { display: none; }
   .bento-grid { grid-template-columns: repeat(2, 1fr); }
 

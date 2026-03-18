@@ -19,12 +19,17 @@
   <!-- Navigation -->
   <nav>
     <div class="nav-inner">
-      <a href="index.html" class="nav-logo">Chris Rose</a>
+      <a href="index.html" class="nav-logo">CR</a>
+      <button class="nav-hamburger" aria-label="Toggle menu" onclick="document.querySelector('.nav-links').classList.toggle('nav-open');this.classList.toggle('open')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
       <ul class="nav-links">
         <li><a href="index.html">Home</a></li>
         <li><a href="about.html">About</a></li>
         <li><a href="contact.html" class="active">Contact</a></li>
-        <li><a href="uses.html">Uses</a></li>
+        <li><a href="uses.html">My Gear</a></li>
         <li><a href="reading-list.html">Reading List</a></li>
       </ul>
       <div class="nav-actions">
@@ -157,7 +162,7 @@
         <li><a href="index.html">Home</a></li>
         <li><a href="about.html">About</a></li>
         <li><a href="contact.html">Contact</a></li>
-        <li><a href="uses.html">Uses</a></li>
+        <li><a href="uses.html">My Gear</a></li>
         <li><a href="reading-list.html">Reading List</a></li>
       </ul>
     </div>
