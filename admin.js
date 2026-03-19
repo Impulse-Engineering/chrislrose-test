@@ -279,8 +279,10 @@
     function openSoftwareModal(item) {
       state.editingSoftwareId = item ? item.id : null;
       document.getElementById('sw-modal-title').textContent = item ? 'Edit Software' : 'Add Software';
-      document.getElementById('sw-name').value = item ? item.name              : '';
-      document.getElementById('sw-desc').value = item ? (item.description || '') : '';
+      document.getElementById('sw-name').value  = item ? item.name              : '';
+      document.getElementById('sw-badge').value = item ? (item.badge  || '')    : '';
+      document.getElementById('sw-icon').value  = item ? (item.icon   || '')    : '';
+      document.getElementById('sw-desc').value  = item ? (item.description || '') : '';
       swStatus.textContent = '';
       swModal.removeAttribute('hidden');
       setTimeout(function () { document.getElementById('sw-name').focus(); }, 40);
@@ -296,6 +298,8 @@
       var entry = {
         id:          id,
         name:        name,
+        badge:       document.getElementById('sw-badge').value.trim() || null,
+        icon:        document.getElementById('sw-icon').value.trim()  || null,
         description: document.getElementById('sw-desc').value.trim(),
         sort_order:  orig ? orig.sort_order : state.software.length
       };

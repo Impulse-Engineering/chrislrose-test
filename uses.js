@@ -55,9 +55,13 @@
     items.forEach(function (item) {
       var card = document.createElement('div');
       card.className = 'card anim-fade-up';
+      var iconHtml = item.icon
+        ? '<div style="font-size:1.75rem;line-height:1;margin-bottom:0.75rem;">' + escHtml(item.icon) + '</div>'
+        : '<div style="margin-bottom:0.75rem;">' + codeSvg() + '</div>';
       card.innerHTML =
-        '<div style="margin-bottom:0.75rem;">' + codeSvg() + '</div>' +
+        iconHtml +
         '<h3>' + escHtml(item.name) + '</h3>' +
+        (item.badge ? '<span class="hardware-badge">' + escHtml(item.badge) + '</span>' : '') +
         '<p>' + escHtml(item.description || '') + '</p>';
       grid.appendChild(card);
     });
