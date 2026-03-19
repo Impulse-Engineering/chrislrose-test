@@ -54,7 +54,6 @@
     var selectionCancelBtn = document.getElementById('selection-cancel-btn');
     var collectionBannerEl = document.getElementById('collection-banner');
     var settingsPanel = document.getElementById('settings-panel');
-    var settingsSave  = document.getElementById('settings-save-btn');
     var settingsLock  = document.getElementById('settings-lock-btn');
     var bookmarklet   = document.getElementById('bookmarklet-link');
 
@@ -65,11 +64,7 @@
     var authPassword = document.getElementById('admin-password');
     var authError    = document.getElementById('auth-error');
     var authSubmit   = document.getElementById('auth-submit-btn');
-    var categoryChips    = document.getElementById('category-chips');
-    var newCategoryInput = document.getElementById('new-category-input');
-    var addCategoryBtn   = document.getElementById('add-category-btn');
-    var categoryStatus   = document.getElementById('category-status');
-    var persistToast     = document.getElementById('persist-toast');
+    var persistToast = document.getElementById('persist-toast');
 
     var linkModal      = document.getElementById('link-modal');
     var linkBackdrop   = document.getElementById('link-modal-backdrop');
@@ -620,7 +615,6 @@
         if (settingsPanel.classList.contains('open')) {
           settingsPanel.classList.remove('open');
         } else {
-          renderCategoryChips();
           // Build bookmarklet href — use current page URL so it works on any host
           var dest = location.href.split('?')[0];
           var bl = 'javascript:(function(){' +
@@ -682,34 +676,9 @@
     }
 
     // ── Settings panel ───────────────────────────────────────────
-    settingsSave.addEventListener('click', function () {
-      settingsPanel.classList.remove('open');
-    });
-
     settingsLock.addEventListener('click', function () {
       settingsPanel.classList.remove('open');
       deactivateAdmin();
-    });
-
-    addCategoryBtn.addEventListener('click', function () {
-      var name = newCategoryInput.value.trim();
-      if (!name) return;
-      if (state.categories.indexOf(name) !== -1) {
-        categoryStatus.style.color = '#f85149';
-        categoryStatus.textContent = 'Category already exists.';
-        return;
-      }
-      state.categories.push(name);
-      newCategoryInput.value = '';
-      categoryStatus.textContent = '';
-      renderCategoryChips();
-      buildCategorySelect();
-      buildFilterTabs();
-      persistCategories();
-    });
-
-    newCategoryInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); addCategoryBtn.click(); }
     });
 
     // ── OG fetch (on URL input) ──────────────────────────────────
@@ -1045,47 +1014,6 @@
       persistToast._timer = setTimeout(function () {
         persistToast.setAttribute('hidden', '');
       }, type === 'error' ? 6000 : 3000);
-    }
-
-    // ── Category chips ───────────────────────────────────────────
-    function renderCategoryChips() {
-      if (!categoryChips) return;
-      categoryChips.innerHTML = '';
-      state.categories.forEach(function (cat) {
-        var chip = document.createElement('span');
-        chip.className = 'cat-chip';
-        chip.innerHTML = escHtml(cat) +
-          '<button type="button" aria-label="Remove ' + escAttr(cat) + '">\u00d7</button>';
-        chip.querySelector('button').addEventListener('click', function () {
-          state.categories = state.categories.filter(function (c) { return c !== cat; });
-          renderCategoryChips();
-          buildCategorySelect();
-          buildFilterTabs();
-          persistCategories();
-        });
-        categoryChips.appendChild(chip);
-      });
-    }
-
-    // ── Persist categories to Supabase ───────────────────────────
-    function persistCategories() {
-      categoryStatus.style.color = 'var(--color-text-dim)';
-      categoryStatus.textContent = 'Saving\u2026';
-      var rows = state.categories.map(function (name, i) {
-        return { name: name, sort_order: i };
-      });
-      db.from('categories').delete().neq('name', '').then(function () {
-        return db.from('categories').insert(rows);
-      }).then(function (res) {
-        if (res.error) {
-          categoryStatus.style.color = '#f85149';
-          categoryStatus.textContent = '\u2717 Failed: ' + res.error.message;
-        } else {
-          categoryStatus.style.color = 'var(--color-accent)';
-          categoryStatus.textContent = '\u2713 Categories saved.';
-          setTimeout(function () { categoryStatus.textContent = ''; }, 3000);
-        }
-      });
     }
 
     // ── Init ─────────────────────────────────────────────────────

@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Gear — Chris Rose</title>
-  <meta name="description" content="The hardware, software, and tools Chris Rose uses day-to-day as a technology executive in cybersecurity and network operations." />
-  <!-- Theme: apply before paint to prevent flash -->
+  <meta name="description" content="The hardware, software, and tools Chris Rose uses day-to-day as a technology executive." />
   <script>(function(){var s=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');if(s==='light')document.documentElement.setAttribute('data-theme','light');}());</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -31,6 +30,7 @@
         <li><a href="reading-list.html">Reading List</a></li>
       </ul>
       <div class="nav-actions">
+        <a href="admin.html" class="nav-action-btn" style="text-decoration:none;">Admin</a>
         <button id="theme-toggle" class="nav-action-btn" aria-label="Toggle light/dark mode" title="Toggle theme">
           <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
@@ -60,7 +60,20 @@
         <div class="section-header anim-fade-up">
           <span class="section-eyebrow">// my gear</span>
           <h2>My Gear</h2>
-          <p>The hardware, software, security tools, and platforms I rely on daily as a technology executive. Updated regularly.</p>
+          <p>The hardware, software, and tools I rely on daily as a technology executive. Updated regularly.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- What I'm Doing Now -->
+    <section class="section" id="now-section" style="padding-top:0;padding-bottom:1rem;">
+      <div class="container">
+        <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
+          <span class="section-eyebrow">// now</span>
+          <h2>What I'm Doing Now</h2>
+        </div>
+        <div class="card anim-fade-up" id="now-content">
+          <!-- Populated by uses.js -->
         </div>
       </div>
     </section>
@@ -72,139 +85,25 @@
           <span class="section-eyebrow">// hardware</span>
           <h2>Hardware</h2>
         </div>
-        <div class="hardware-grid">
-
-          <!-- MacBook Pro 14" M1 -->
-          <div class="hardware-card anim-fade-up">
-            <div class="hardware-photo-wrap">
-              <img
-                class="hardware-photo"
-                src="images/macbook-pro.PNG"
-                alt="Apple MacBook Pro 14-inch M1"
-                loading="lazy"
-                onerror="this.style.display='none'"
-              />
-              <svg class="hardware-photo-fallback" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-              </svg>
-            </div>
-            <div class="hardware-card-body">
-              <h3>Apple MacBook Pro 14"</h3>
-              <span class="hardware-badge">M1 chip</span>
-              <p>The 14-inch M1 MacBook Pro is the daily driver. Apple Silicon delivers the horsepower for video calls, CRM, and everything in between — with all-day battery life I can actually count on.</p>
-            </div>
+        <div class="hardware-grid" id="hardware-grid">
+          <!-- Populated by uses.js -->
+          <div class="hardware-card" style="opacity:0.4;">
+            <div class="hardware-photo-wrap"></div>
+            <div class="hardware-card-body"><h3 style="color:var(--color-text-dim);">Loading&hellip;</h3></div>
           </div>
-
-          <!-- iPhone 17 Pro -->
-          <div class="hardware-card anim-fade-up">
-            <div class="hardware-photo-wrap">
-              <img
-                class="hardware-photo"
-                src="images/iphone-17-pro.png"
-                alt="Apple iPhone 17 Pro"
-                loading="lazy"
-                onerror="this.style.display='none'"
-              />
-              <svg class="hardware-photo-fallback" width="36" height="56" viewBox="0 0 14 24" fill="none" stroke="var(--color-accent)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="1" y="1" width="12" height="22" rx="2.5"/>
-                <line x1="5" y1="19.5" x2="9" y2="19.5" stroke-width="1.8"/>
-              </svg>
-            </div>
-            <div class="hardware-card-body">
-              <h3>iPhone 17 Pro</h3>
-              <span class="hardware-badge">A19 Pro</span>
-              <p>Always the latest Pro model. The 17 Pro's camera plateau is a generational leap — plus the A19 Pro chip handles 1Password, Webex, email, and AI features without skipping a beat.</p>
-            </div>
-          </div>
-
-          <!-- Apple iPad M4 -->
-          <div class="hardware-card anim-fade-up">
-            <div class="hardware-photo-wrap">
-              <img
-                class="hardware-photo"
-                src="images/ipad-m4.PNG"
-                alt="Apple iPad Pro M4"
-                loading="lazy"
-                onerror="this.style.display='none'"
-              />
-              <svg class="hardware-photo-fallback" width="44" height="56" viewBox="0 0 18 24" fill="none" stroke="var(--color-accent)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="1" y="1" width="16" height="22" rx="2.5"/>
-                <circle cx="9" cy="19.5" r="1.2"/>
-              </svg>
-            </div>
-            <div class="hardware-card-body">
-              <h3>Apple iPad M4</h3>
-              <span class="hardware-badge">M4 chip</span>
-              <p>The M4 iPad handles presentations, demos with clients, and light content creation on the go. The Liquid Retina XDR display is perfect for showing network diagrams and product decks.</p>
-            </div>
-          </div>
-
         </div>
       </div>
     </section>
 
-    <!-- Software & Productivity -->
-    <section class="section">
+    <!-- Software & Apps -->
+    <section class="section" style="background: var(--color-bg-alt);">
       <div class="container">
         <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
           <span class="section-eyebrow">// software</span>
-          <h2>Software &amp; Productivity</h2>
+          <h2>Software &amp; Apps</h2>
         </div>
-        <div class="grid-3">
-          <div class="card anim-fade-up">
-            <div style="margin-bottom:0.75rem;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-            </div>
-            <h3>1Password</h3>
-            <p>Non-negotiable for any security-minded professional. I recommend it to every client and every team I manage. Strong passwords everywhere, always.</p>
-          </div>
-          <div class="card anim-fade-up">
-            <div style="margin-bottom:0.75rem;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <h3>Cisco Webex &amp; MS Teams</h3>
-            <p>The two collaboration platforms I live in every day. Deep experience with both from a deployment and management perspective — including UCaaS integrations.</p>
-          </div>
-          <div class="card anim-fade-up">
-            <div style="margin-bottom:0.75rem;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-              </svg>
-            </div>
-            <h3>Salesforce CRM</h3>
-            <p>Led the implementation of Salesforce at Netlojix — it transformed the sales team's productivity. Still believe it's the gold standard for managing client relationships at scale.</p>
-          </div>
-          <div class="card anim-fade-up">
-            <div style="margin-bottom:0.75rem;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
-              </svg>
-            </div>
-            <h3>Claude Code</h3>
-            <p>My AI coding tool of choice — and the one that built this site. Claude Code runs natively on my Mac and blows ChatGPT and Copilot out of the water for real development work. When I'm away from my desk I connect back to it from my iPad using the Claude remote connect app, so I can vibe code on the go from anywhere.</p>
-          </div>
-          <div class="card anim-fade-up">
-            <div style="margin-bottom:0.75rem;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-            </div>
-            <h3>Network Analysis Tools</h3>
-            <p>Wireshark and vendor-specific management platforms for deep-dive troubleshooting. When something breaks, you need to see what's actually happening on the wire.</p>
-          </div>
-          <div class="card anim-fade-up">
-            <div style="margin-bottom:0.75rem;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
-              </svg>
-            </div>
-            <h3>Vendor Portals &amp; NMS</h3>
-            <p>Deep experience navigating the management dashboards for Cisco, Juniper, Cato, and others. Understanding the tools behind the technology is essential to evaluating them properly.</p>
-          </div>
+        <div class="grid-3" id="software-grid">
+          <!-- Populated by uses.js -->
         </div>
       </div>
     </section>
@@ -225,9 +124,9 @@
             <span class="vendor-tag">GSAP 3</span>
             <span class="vendor-tag">ScrollTrigger</span>
             <span class="vendor-tag">GitHub Pages</span>
+            <span class="vendor-tag">Supabase</span>
             <span class="vendor-tag">Google Fonts (Inter)</span>
             <span class="vendor-tag">JetBrains Mono</span>
-            <span class="vendor-tag">Formspree</span>
             <span class="vendor-tag">Claude Code</span>
           </div>
         </div>
@@ -282,5 +181,7 @@
   <script src="cursor.js" defer></script>
   <script src="command-palette.js" defer></script>
   <script src="easter-egg.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="uses.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Chris Rose</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <script>(function(){var s=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');if(s==='light')document.documentElement.setAttribute('data-theme','light');}());</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">CR</a>
+      <button class="nav-hamburger" aria-label="Toggle menu" onclick="document.querySelector('.nav-links').classList.toggle('nav-open');this.classList.toggle('open')">
+        Menu ▾
+      </button>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="uses.html">My Gear</a></li>
+        <li><a href="reading-list.html">Reading List</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="admin.html" class="nav-action-btn active" style="text-decoration:none;font-weight:600;">Admin</a>
+        <button id="theme-toggle" class="nav-action-btn" aria-label="Toggle light/dark mode" title="Toggle theme">
+          <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- Login (shown when not authenticated) -->
+    <section id="admin-login" class="section" style="padding-bottom:1rem;" hidden>
+      <div class="container">
+        <div class="section-header anim-fade-up">
+          <span class="section-eyebrow">// admin</span>
+          <h2>Admin Login</h2>
+          <p>Sign in to manage your site content.</p>
+        </div>
+        <div class="card anim-fade-up" style="max-width:420px;">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" placeholder="you@example.com" autocomplete="username" />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" />
+          </div>
+          <div id="login-error" style="font-size:0.8rem;color:#f85149;min-height:1.2em;margin-bottom:0.75rem;"></div>
+          <button class="btn btn-primary" id="login-submit" style="width:100%;">Sign in</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard (shown when authenticated) -->
+    <section id="admin-dashboard" class="section" style="padding-bottom:1rem;" hidden>
+      <div class="container">
+        <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
+          <span class="section-eyebrow">// admin</span>
+          <h2>Admin Dashboard</h2>
+        </div>
+
+        <!-- Tabs -->
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-tab="tab-reading-list">Reading List</button>
+          <button class="admin-tab" data-tab="tab-gear">My Gear</button>
+          <button class="admin-tab" data-tab="tab-now">Now</button>
+          <button class="btn" id="logout-btn" style="margin-left:auto;font-size:0.78rem;padding:0.3rem 0.8rem;color:var(--color-text-muted);">Sign out</button>
+        </div>
+
+        <!-- ── Reading List Tab ────────────────────────────────── -->
+        <div class="admin-section active" id="tab-reading-list">
+
+          <div class="admin-subsection">
+            <h3 class="admin-subsection-title">Categories</h3>
+            <div id="cat-chips" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.75rem;min-height:1.5rem;"></div>
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.4rem;">
+              <input id="cat-input" type="text" placeholder="New category…" autocomplete="off" style="flex:1;" />
+              <button class="btn" id="cat-add-btn" style="white-space:nowrap;padding:0.45rem 0.75rem;font-size:0.8rem;">Add</button>
+            </div>
+            <div id="cat-status" style="font-size:0.75rem;min-height:1.2em;"></div>
+          </div>
+
+          <div class="admin-subsection">
+            <h3 class="admin-subsection-title">Bookmarklet</h3>
+            <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:0.75rem;">Drag to your bookmarks bar to quickly add any page to your reading list:</p>
+            <a id="bookmarklet-link" class="bookmarklet-link" href="#" title="Drag to bookmarks bar">+ Reading List</a>
+            <p style="font-size:0.72rem;color:var(--color-text-dim);margin-top:0.5rem;">Click while browsing any page to add it.</p>
+          </div>
+
+          <div class="admin-subsection">
+            <a href="reading-list.html" class="btn" style="font-size:0.8rem;">View Reading List &rarr;</a>
+          </div>
+
+        </div>
+
+        <!-- ── My Gear Tab ─────────────────────────────────────── -->
+        <div class="admin-section" id="tab-gear">
+
+          <div class="admin-subsection">
+            <div class="admin-subsection-header">
+              <h3 class="admin-subsection-title">Hardware</h3>
+              <button class="btn btn-primary" id="add-hardware-btn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">+ Add Hardware</button>
+            </div>
+            <div id="hardware-list"></div>
+          </div>
+
+          <div class="admin-subsection">
+            <div class="admin-subsection-header">
+              <h3 class="admin-subsection-title">Software &amp; Apps</h3>
+              <button class="btn btn-primary" id="add-software-btn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">+ Add Software</button>
+            </div>
+            <div id="software-list"></div>
+          </div>
+
+          <div class="admin-subsection">
+            <a href="uses.html" class="btn" style="font-size:0.8rem;">View My Gear page &rarr;</a>
+          </div>
+
+        </div>
+
+        <!-- ── Now Tab ─────────────────────────────────────────── -->
+        <div class="admin-section" id="tab-now">
+          <div class="admin-subsection">
+            <h3 class="admin-subsection-title">What I'm Doing Now</h3>
+            <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:1rem;">This appears at the top of the My Gear page. Plain text, updated whenever you like. Leave it empty to hide the section entirely.</p>
+            <textarea
+              id="now-textarea"
+              rows="10"
+              placeholder="What are you working on right now? What are you excited about? What have you recently changed your mind about?"
+              style="width:100%;font-family:var(--font-sans);font-size:0.9rem;line-height:1.6;resize:vertical;"
+            ></textarea>
+            <div id="now-updated" style="font-family:var(--font-mono);font-size:0.72rem;color:var(--color-text-dim);margin-top:0.5rem;min-height:1.2em;"></div>
+            <div style="display:flex;align-items:center;gap:1rem;margin-top:0.75rem;">
+              <button class="btn btn-primary" id="now-save-btn" style="padding:0.45rem 1.25rem;">Save</button>
+              <span id="now-status" style="font-size:0.8rem;min-height:1.2em;"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <p>&copy; 2026 Chris Rose. All rights reserved.</p>
+      <ul class="footer-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="uses.html">My Gear</a></li>
+        <li><a href="reading-list.html">Reading List</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- Hardware modal -->
+  <div class="rl-modal" id="hw-modal" hidden>
+    <div class="rl-modal-backdrop" id="hw-modal-backdrop"></div>
+    <div class="rl-modal-inner">
+      <button class="rl-modal-close" id="hw-modal-close" aria-label="Close">&times;</button>
+      <p class="rl-modal-title" id="hw-modal-title">Add Hardware</p>
+      <div class="form-group">
+        <label for="hw-name">Name</label>
+        <input type="text" id="hw-name" placeholder="e.g. Apple MacBook Pro 14&quot;" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="hw-badge">Badge <span style="font-weight:400;color:var(--color-text-dim);">(optional — e.g. M1 chip)</span></label>
+        <input type="text" id="hw-badge" placeholder="e.g. M4 chip" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="hw-image">Image URL <span style="font-weight:400;color:var(--color-text-dim);">(optional — paste a link)</span></label>
+        <input type="url" id="hw-image" placeholder="https://…" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="hw-desc">Description</label>
+        <textarea id="hw-desc" placeholder="Why you use it, what makes it great…"></textarea>
+      </div>
+      <div id="hw-status" style="font-size:0.8rem;min-height:1.2em;margin-bottom:0.5rem;"></div>
+      <button class="btn btn-primary" id="hw-save-btn" style="width:100%;">Save</button>
+    </div>
+  </div>
+
+  <!-- Software modal -->
+  <div class="rl-modal" id="sw-modal" hidden>
+    <div class="rl-modal-backdrop" id="sw-modal-backdrop"></div>
+    <div class="rl-modal-inner">
+      <button class="rl-modal-close" id="sw-modal-close" aria-label="Close">&times;</button>
+      <p class="rl-modal-title" id="sw-modal-title">Add Software</p>
+      <div class="form-group">
+        <label for="sw-name">Name</label>
+        <input type="text" id="sw-name" placeholder="e.g. 1Password" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="sw-desc">Description</label>
+        <textarea id="sw-desc" placeholder="Why you use it, what makes it great…"></textarea>
+      </div>
+      <div id="sw-status" style="font-size:0.8rem;min-height:1.2em;margin-bottom:0.5rem;"></div>
+      <button class="btn btn-primary" id="sw-save-btn" style="width:100%;">Save</button>
+    </div>
+  </div>
+
+  <script src="theme.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="admin.js" defer></script>
+</body>
+</html>
