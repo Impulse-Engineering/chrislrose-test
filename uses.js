@@ -5,7 +5,7 @@
   var SUPABASE_ANON = 'sb_publishable_RPJSQlVO4isbKnZve8NlWg_55EO350Y';
   var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function init() {
     Promise.all([
       db.from('gear_hardware').select('*').order('sort_order'),
       db.from('gear_software').select('*').order('sort_order'),
@@ -19,7 +19,13 @@
     }).catch(function (err) {
       console.warn('[uses] load failed:', err.message);
     });
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
   function renderHardware(items) {
     var grid = document.getElementById('hardware-grid');

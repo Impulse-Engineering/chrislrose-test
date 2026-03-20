@@ -15,7 +15,7 @@
     editingHobbyId:    null
   };
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function init() {
 
     // ── DOM refs ──────────────────────────────────────────────────
     var loginSection  = document.getElementById('admin-login');
@@ -440,6 +440,12 @@
     }
     function escAttr(str) { return escHtml(str); }
 
-  }); // end DOMContentLoaded
+  } // end init
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
 }());
