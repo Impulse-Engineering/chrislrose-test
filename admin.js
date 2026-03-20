@@ -355,10 +355,9 @@
     function openHobbyModal(item) {
       state.editingHobbyId = item ? item.id : null;
       document.getElementById('hb-modal-title').textContent = item ? 'Edit Hobby' : 'Add Hobby';
-      document.getElementById('hb-name').value  = item ? item.name              : '';
-      document.getElementById('hb-badge').value = item ? (item.badge  || '')    : '';
-      document.getElementById('hb-icon').value  = item ? (item.icon   || '')    : '';
-      document.getElementById('hb-url').value   = item ? (item.url    || '')    : '';
+      document.getElementById('hb-name').value  = item ? item.name               : '';
+      document.getElementById('hb-badge').value = item ? (item.badge     || '')  : '';
+      document.getElementById('hb-image').value = item ? (item.image_url || '')  : '';
       document.getElementById('hb-desc').value  = item ? (item.description || '') : '';
       hbStatus.textContent = '';
       hbModal.removeAttribute('hidden');
@@ -376,8 +375,7 @@
         id:          id,
         name:        name,
         badge:       document.getElementById('hb-badge').value.trim() || null,
-        icon:        document.getElementById('hb-icon').value.trim()  || null,
-        url:         document.getElementById('hb-url').value.trim()   || null,
+        image_url:   document.getElementById('hb-image').value.trim() || null,
         description: document.getElementById('hb-desc').value.trim(),
         sort_order:  orig ? orig.sort_order : state.hobbies.length
       };
