@@ -992,7 +992,7 @@
 
     function checkAddParam() {
       var search = window.location.search;
-      var addUrl = search.startsWith('?add=') ? search.slice(5) : null;
+      var addUrl = search.startsWith('?add=') ? decodeURIComponent(search.slice(5)) : null;
       if (!addUrl) return;
       window.history.replaceState({}, '', window.location.pathname);
       if (state.isAdmin) {
