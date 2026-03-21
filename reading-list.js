@@ -12,7 +12,8 @@
   var SUPABASE_ANON = 'sb_publishable_RPJSQlVO4isbKnZve8NlWg_55EO350Y';
   var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  var MICROLINK  = 'https://api.microlink.io?url=';
+  var MICROLINK    = 'https://api.microlink.io?url=';
+  var PRIMARY_URL  = 'https://chrislrose.aseva.ai/reading-list.html';
 
   // ── State ─────────────────────────────────────────────────────
   var state = {
@@ -725,11 +726,10 @@
         if (settingsPanel.classList.contains('open')) {
           settingsPanel.classList.remove('open');
         } else {
-          // Build bookmarklet href — use current page URL so it works on any host
-          var dest = location.href.split('?')[0];
+          // Build bookmarklet href — always points to primary domain
           var bl = 'javascript:(function(){' +
             "var u=encodeURIComponent(location.href);" +
-            "window.open('" + dest + "?add='+u,'_blank');" +
+            "window.open('" + PRIMARY_URL + "?add='+u,'_blank');" +
             '})();';
           bookmarklet.href = bl;
           settingsPanel.classList.add('open');
@@ -876,7 +876,6 @@
       linkTitle.dataset.favicon = '';
       linkDesc.value   = '';
       linkNote.value   = '';
-      linkUnread.checked  = false;
       linkPrivate.checked = false;
       linkStatus.value = '';
       linkTags.value   = '';

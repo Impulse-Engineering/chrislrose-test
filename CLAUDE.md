@@ -18,7 +18,9 @@ A personal website with multiple pages and a Supabase-backed reading list:
 - `uses.js` — Uses page dynamic content (gear cards)
 - `admin.js` — Admin panel logic
 
-**Hosting:** Company-managed hosting environment (not limited to GitHub Pages). Also mirrored to GitHub Pages. Can install server software.
+**Primary URL:** `https://chrislrose.aseva.ai` — this is the canonical domain.
+**Hosting:** Company-managed hosting environment. Also mirrored to GitHub Pages (`https://chrislrosesb.github.io/test/`) but that is NOT the primary site.
+**Reading list primary URL:** `https://chrislrose.aseva.ai/reading-list.html` — hardcoded in `reading-list.js` as `PRIMARY_URL` so bookmarklets always point here regardless of which mirror you're viewing from.
 
 ---
 
@@ -100,9 +102,10 @@ Admin access is via a FAB button (bottom-right). Logging in activates `admin-mod
 
 ## Deployment
 
-- **Primary host:** Company-managed hosting environment — can run any server software
-- **Mirror:** GitHub Pages (also deploys from `main` branch automatically)
+- **Primary host:** `https://chrislrose.aseva.ai` — company-managed hosting, can run any server software
+- **Mirror:** GitHub Pages at `https://chrislrosesb.github.io/test/` (deploys from `main` branch automatically)
 - **Deploy process:** `git push` to `main` — no build step, files are served directly
+- **Important:** Always use the primary domain (`chrislrose.aseva.ai`) in any hardcoded URLs (bookmarklets, share links, etc.)
 
 ---
 
