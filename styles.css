@@ -3137,6 +3137,87 @@ a.podcast-card:hover .podcast-card-body h3 {
   text-overflow: ellipsis;
 }
 
+/* ── Gear Tab Bar ───────────────────────────────────────── */
+.gear-tabs-wrap {
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  padding: 1.25rem 0;
+}
+
+.gear-tabs-bar {
+  display: flex;
+  gap: 0.65rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.gear-tabs-bar::-webkit-scrollbar { display: none; }
+
+.gear-tab {
+  flex: 1;
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.85rem 0.75rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease,
+              color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+
+.gear-tab:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.gear-tab.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(88, 166, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+[data-theme="light"] .gear-tab.active {
+  box-shadow: 0 4px 18px rgba(9, 105, 218, 0.3);
+}
+
+.gear-tab-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  transition: transform 180ms ease;
+}
+
+.gear-tab.active .gear-tab-icon {
+  transform: scale(1.15);
+}
+
+.gear-tab-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.gear-panel {
+  transition: opacity 180ms ease;
+}
+
+.gear-panel[hidden] {
+  display: none !important;
+}
+
 /* Curate button (admin only) */
 .filter-curate-btn {
   padding: 0.3rem 0.7rem;

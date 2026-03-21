@@ -81,8 +81,36 @@
       </div>
     </section>
 
-    <!-- Hardware -->
-    <section class="section" style="padding-top:1rem;">
+    <!-- Tab Bar -->
+    <div class="gear-tabs-wrap">
+      <div class="container">
+        <div class="gear-tabs-bar" role="tablist">
+          <button class="gear-tab active" data-tab="panel-hardware" role="tab" aria-selected="true">
+            <span class="gear-tab-icon">🖥</span>
+            <span class="gear-tab-label">Hardware</span>
+          </button>
+          <button class="gear-tab" data-tab="panel-software" role="tab" aria-selected="false">
+            <span class="gear-tab-icon">💻</span>
+            <span class="gear-tab-label">Software</span>
+          </button>
+          <button class="gear-tab" data-tab="panel-projects" role="tab" aria-selected="false">
+            <span class="gear-tab-icon">🚀</span>
+            <span class="gear-tab-label">Projects</span>
+          </button>
+          <button class="gear-tab" data-tab="panel-podcasts" role="tab" aria-selected="false">
+            <span class="gear-tab-icon">🎙</span>
+            <span class="gear-tab-label">Podcasts</span>
+          </button>
+          <button class="gear-tab" data-tab="panel-hobbies" role="tab" aria-selected="false">
+            <span class="gear-tab-icon">🎯</span>
+            <span class="gear-tab-label">Hobbies</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hardware Panel -->
+    <section class="section gear-panel" id="panel-hardware">
       <div class="container">
         <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
           <span class="section-eyebrow">// hardware</span>
@@ -98,8 +126,8 @@
       </div>
     </section>
 
-    <!-- Software & Apps -->
-    <section class="section" style="background: var(--color-bg-alt);">
+    <!-- Software Panel -->
+    <section class="section gear-panel" id="panel-software" hidden>
       <div class="container">
         <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
           <span class="section-eyebrow">// software</span>
@@ -111,8 +139,8 @@
       </div>
     </section>
 
-    <!-- Projects -->
-    <section class="section" style="background: var(--color-bg-alt);">
+    <!-- Projects Panel -->
+    <section class="section gear-panel" id="panel-projects" hidden>
       <div class="container">
         <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
           <span class="section-eyebrow">// projects</span>
@@ -124,8 +152,21 @@
       </div>
     </section>
 
-    <!-- Other Hobbies -->
-    <section class="section">
+    <!-- Podcasts Panel -->
+    <section class="section gear-panel" id="panel-podcasts" hidden>
+      <div class="container">
+        <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
+          <span class="section-eyebrow">// podcasts</span>
+          <h2>Favorite Podcasts</h2>
+        </div>
+        <div class="podcast-grid" id="podcasts-grid">
+          <!-- Populated by uses.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Hobbies Panel -->
+    <section class="section gear-panel" id="panel-hobbies" hidden>
       <div class="container">
         <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
           <span class="section-eyebrow">// hobbies</span>
@@ -133,19 +174,6 @@
         </div>
         <div class="hardware-grid" id="hobbies-grid">
           <!-- Populated by uses.js -->
-        </div>
-      </div>
-    </section>
-
-    <!-- Podcasts -->
-    <section class="section" style="background: var(--color-bg-alt);">
-      <div class="container">
-        <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
-          <span class="section-eyebrow">// podcasts</span>
-          <h2>Favorite Podcasts</h2>
-        </div>
-        <div class="podcast-grid" id="podcasts-grid">
-          <!-- Populated by uses.js (podcasts) -->
         </div>
       </div>
     </section>

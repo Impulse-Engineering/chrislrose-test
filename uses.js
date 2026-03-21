@@ -20,9 +20,49 @@
       renderHobbies(results[3].data || []);
       renderProjects(results[4].data || []);
       renderPodcasts(results[5].data || []);
+      initTabs();
     }).catch(function (err) {
       console.warn('[uses] load failed:', err.message);
     });
+  }
+
+  function initTabs() {
+    var tabs   = document.querySelectorAll('.gear-tab');
+    var panels = document.querySelectorAll('.gear-panel');
+    if (!tabs.length || !panels.length) return;
+
+    function activateTab(targetId) {
+      tabs.forEach(function (t) {
+        var active = t.dataset.tab === targetId;
+        t.classList.toggle('active', active);
+        t.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      panels.forEach(function (p) {
+        if (p.id === targetId) {
+          p.removeAttribute('hidden');
+          p.style.opacity = '0';
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () { p.style.opacity = '1'; });
+          });
+        } else {
+          p.setAttribute('hidden', '');
+          p.style.opacity = '';
+        }
+      });
+      localStorage.setItem('gear-tab', targetId);
+      history.replaceState(null, '', '#' + targetId);
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () { activateTab(tab.dataset.tab); });
+    });
+
+    var hash  = location.hash.slice(1);
+    var saved = localStorage.getItem('gear-tab');
+    var valid = Array.prototype.map.call(panels, function (p) { return p.id; });
+    var initial = (hash  && valid.indexOf(hash)  !== -1) ? hash  :
+                  (saved && valid.indexOf(saved) !== -1) ? saved : 'panel-hardware';
+    activateTab(initial);
   }
 
   if (document.readyState === 'loading') {
