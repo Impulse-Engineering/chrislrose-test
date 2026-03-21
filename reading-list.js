@@ -153,13 +153,11 @@
 
       var q = state.searchQuery.toLowerCase().trim();
       if (q) {
+        var tokens = q.split(/\s+/).filter(Boolean);
         links = links.filter(function (l) {
-          return (l.title       && l.title.toLowerCase().indexOf(q)       !== -1) ||
-                 (l.description && l.description.toLowerCase().indexOf(q) !== -1) ||
-                 (l.note        && l.note.toLowerCase().indexOf(q)        !== -1) ||
-                 (l.domain      && l.domain.toLowerCase().indexOf(q)      !== -1) ||
-                 (l.category    && l.category.toLowerCase().indexOf(q)    !== -1) ||
-                 (l.tags        && l.tags.toLowerCase().indexOf(q)        !== -1);
+          var haystack = [l.title, l.description, l.note, l.domain, l.category, l.tags]
+            .filter(Boolean).join(' ').toLowerCase();
+          return tokens.every(function (tok) { return haystack.indexOf(tok) !== -1; });
         });
       }
 
