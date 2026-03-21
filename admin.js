@@ -11,10 +11,12 @@
     software:          [],
     hobbies:           [],
     projects:          [],
+    podcasts:          [],
     editingHardwareId: null,
     editingSoftwareId: null,
     editingHobbyId:    null,
-    editingProjectId:  null
+    editingProjectId:  null,
+    editingPodcastId:  null
   };
 
   function init() {
@@ -43,6 +45,8 @@
     var hbStatus   = document.getElementById('hb-status');
     var prModal    = document.getElementById('pr-modal');
     var prStatus   = document.getElementById('pr-status');
+    var podModal   = document.getElementById('pod-modal');
+    var podStatus  = document.getElementById('pod-status');
 
     var nowTextarea = document.getElementById('now-textarea');
     var nowSaveBtn  = document.getElementById('now-save-btn');
@@ -184,16 +188,19 @@
         db.from('gear_hardware').select('*').order('sort_order'),
         db.from('gear_software').select('*').order('sort_order'),
         db.from('gear_hobbies').select('*').order('sort_order'),
-        db.from('gear_projects').select('*').order('sort_order')
+        db.from('gear_projects').select('*').order('sort_order'),
+        db.from('gear_podcasts').select('*').order('sort_order')
       ]).then(function (results) {
         state.hardware = results[0].data || [];
         state.software = results[1].data || [];
         state.hobbies  = results[2].data || [];
         state.projects = results[3].data || [];
+        state.podcasts = results[4].data || [];
         renderHardwareList();
         renderSoftwareList();
         renderHobbiesList();
         renderProjectsList();
+        renderPodcastsList();
       });
     }
 
@@ -470,6 +477,109 @@
       db.from('gear_projects').delete().eq('id', id).then(function () { loadGear(); });
     }
 
+    // ── Gear: Podcasts ────────────────────────────────────────────
+    function renderPodcastsList() {
+      var list = document.getElementById('podcasts-list');
+      list.innerHTML = '';
+      if (!state.podcasts.length) {
+        list.innerHTML = '<p style="color:var(--color-text-muted);font-size:0.85rem;padding:0.5rem 0;">No podcasts yet.</p>';
+        return;
+      }
+      state.podcasts.forEach(function (item) {
+        var row = document.createElement('div');
+        row.className = 'admin-list-item';
+        row.innerHTML =
+          (item.artwork_url ? '<img src="' + escAttr(item.artwork_url) + '" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;margin-right:0.5rem;flex-shrink:0;" />' : '') +
+          '<span class="admin-list-item-name">' + escHtml(item.name) + '</span>' +
+          (item.author ? '<span class="admin-list-item-meta">' + escHtml(item.author) + '</span>' : '') +
+          '<button class="btn admin-item-btn" data-action="edit">Edit</button>' +
+          '<button class="btn admin-item-btn admin-item-btn--danger" data-action="del">Delete</button>';
+        row.querySelector('[data-action="edit"]').addEventListener('click', function () { openPodcastModal(item); });
+        row.querySelector('[data-action="del"]').addEventListener('click', function () { deletePodcast(item.id, item.name); });
+        list.appendChild(row);
+      });
+    }
+
+    document.getElementById('add-podcast-btn').addEventListener('click', function () { openPodcastModal(null); });
+    document.getElementById('pod-modal-close').addEventListener('click', closePodcastModal);
+    document.getElementById('pod-modal-backdrop').addEventListener('click', closePodcastModal);
+    document.getElementById('pod-save-btn').addEventListener('click', savePodcast);
+    document.getElementById('pod-fetch-btn').addEventListener('click', fetchPodcastMeta);
+
+    function openPodcastModal(item) {
+      state.editingPodcastId = item ? item.id : null;
+      document.getElementById('pod-modal-title').textContent = item ? 'Edit Podcast' : 'Add Podcast';
+      document.getElementById('pod-apple-url').value = item ? (item.apple_url || '') : '';
+      document.getElementById('pod-name').value       = item ? item.name             : '';
+      document.getElementById('pod-author').value     = item ? (item.author      || '') : '';
+      document.getElementById('pod-artwork').value    = item ? (item.artwork_url  || '') : '';
+      document.getElementById('pod-fetch-status').textContent = '';
+      podStatus.textContent = '';
+      podModal.removeAttribute('hidden');
+      setTimeout(function () { document.getElementById('pod-apple-url').focus(); }, 40);
+    }
+
+    function closePodcastModal() { podModal.setAttribute('hidden', ''); }
+
+    function fetchPodcastMeta() {
+      var url = document.getElementById('pod-apple-url').value.trim();
+      var fetchStatus = document.getElementById('pod-fetch-status');
+      var match = url.match(/\/id(\d+)/);
+      if (!match) {
+        fetchStatus.style.color = '#f85149';
+        fetchStatus.textContent = 'Could not find a podcast ID in that URL.';
+        return;
+      }
+      fetchStatus.style.color = 'var(--color-text-dim)';
+      fetchStatus.textContent = 'Fetching\u2026';
+      fetch('https://itunes.apple.com/lookup?id=' + match[1])
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (!data.results || !data.results.length) {
+            fetchStatus.style.color = '#f85149';
+            fetchStatus.textContent = 'Podcast not found.';
+            return;
+          }
+          var r = data.results[0];
+          document.getElementById('pod-name').value    = r.collectionName || r.trackName || '';
+          document.getElementById('pod-author').value  = r.artistName || '';
+          document.getElementById('pod-artwork').value = r.artworkUrl600 || r.artworkUrl100 || '';
+          fetchStatus.style.color = 'var(--color-accent)';
+          fetchStatus.textContent = '\u2713 Fetched — review and save';
+        })
+        .catch(function (err) {
+          fetchStatus.style.color = '#f85149';
+          fetchStatus.textContent = 'Fetch failed: ' + err.message;
+        });
+    }
+
+    function savePodcast() {
+      var name = document.getElementById('pod-name').value.trim();
+      if (!name) { podStatus.style.color = '#f85149'; podStatus.textContent = 'Name is required.'; return; }
+      var id   = state.editingPodcastId || (slugify(name) + '-' + Date.now().toString(36));
+      var orig = state.editingPodcastId ? state.podcasts.find(function (p) { return p.id === state.editingPodcastId; }) : null;
+      var entry = {
+        id:          id,
+        apple_url:   document.getElementById('pod-apple-url').value.trim() || null,
+        name:        name,
+        author:      document.getElementById('pod-author').value.trim()  || null,
+        artwork_url: document.getElementById('pod-artwork').value.trim() || null,
+        sort_order:  orig ? orig.sort_order : state.podcasts.length
+      };
+      podStatus.style.color = 'var(--color-text-dim)';
+      podStatus.textContent = 'Saving\u2026';
+      db.from('gear_podcasts').upsert(entry).then(function (res) {
+        if (res.error) { podStatus.style.color = '#f85149'; podStatus.textContent = '\u2717 ' + res.error.message; return; }
+        closePodcastModal();
+        loadGear();
+      });
+    }
+
+    function deletePodcast(id, name) {
+      if (!window.confirm('Delete \u201C' + name + '\u201D?')) return;
+      db.from('gear_podcasts').delete().eq('id', id).then(function () { loadGear(); });
+    }
+
     // ── Now ───────────────────────────────────────────────────────
     function loadNow() {
       db.from('site_content').select('*').eq('id', 'now').single().then(function (res) {
@@ -506,7 +616,8 @@
       if (!hwModal.hasAttribute('hidden')) { closeHardwareModal(); return; }
       if (!swModal.hasAttribute('hidden')) { closeSoftwareModal(); return; }
       if (!hbModal.hasAttribute('hidden')) { closeHobbyModal(); return; }
-      if (!prModal.hasAttribute('hidden')) { closeProjectModal(); }
+      if (!prModal.hasAttribute('hidden')) { closeProjectModal(); return; }
+      if (!podModal.hasAttribute('hidden')) { closePodcastModal(); }
     });
 
     // ── Utilities ─────────────────────────────────────────────────

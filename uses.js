@@ -11,13 +11,15 @@
       db.from('gear_software').select('*').order('sort_order'),
       db.from('site_content').select('*').eq('id', 'now').single(),
       db.from('gear_hobbies').select('*').order('sort_order'),
-      db.from('gear_projects').select('*').order('sort_order')
+      db.from('gear_projects').select('*').order('sort_order'),
+      db.from('gear_podcasts').select('*').order('sort_order')
     ]).then(function (results) {
       renderHardware(results[0].data || []);
       renderSoftware(results[1].data || []);
       renderNow(results[2].data);
       renderHobbies(results[3].data || []);
       renderProjects(results[4].data || []);
+      renderPodcasts(results[5].data || []);
     }).catch(function (err) {
       console.warn('[uses] load failed:', err.message);
     });
@@ -145,6 +147,33 @@
     });
   }
 
+  function renderPodcasts(items) {
+    var grid = document.getElementById('podcasts-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!items.length) {
+      grid.innerHTML = '<p style="color:var(--color-text-muted);font-size:0.9rem;">No podcasts yet.</p>';
+      return;
+    }
+    items.forEach(function (item) {
+      var card = document.createElement('a');
+      card.href = item.apple_url || '#';
+      card.target = '_blank';
+      card.rel = 'noopener noreferrer';
+      card.className = 'podcast-card anim-fade-up';
+      var artworkHtml = item.artwork_url
+        ? '<img class="podcast-artwork" src="' + escAttr(item.artwork_url) + '" alt="' + escAttr(item.name) + '" loading="lazy" onerror="this.parentNode.innerHTML=\'<div class=podcast-artwork-fallback>' + microphoneSvg(true) + '</div>\'">'
+        : '<div class="podcast-artwork-fallback">' + microphoneSvg(false) + '</div>';
+      card.innerHTML =
+        artworkHtml +
+        '<div class="podcast-card-body">' +
+          '<h3>' + escHtml(item.name) + '</h3>' +
+          (item.author ? '<p>' + escHtml(item.author) + '</p>' : '') +
+        '</div>';
+      grid.appendChild(card);
+    });
+  }
+
   function renderNow(row) {
     var section = document.getElementById('now-section');
     var content = document.getElementById('now-content');
@@ -164,6 +193,11 @@
 
   function deviceSvg() {
     return '<svg class="hardware-photo-fallback" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+  }
+
+  function microphoneSvg(inline) {
+    var style = inline ? 'style="display:inline-block;"' : '';
+    return '<svg ' + style + ' width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
   }
 
   function codeSvg() {
