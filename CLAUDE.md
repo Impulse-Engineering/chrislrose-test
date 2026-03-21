@@ -130,4 +130,22 @@ Admin access is via a FAB button (bottom-right). Logging in activates `admin-mod
 
 ---
 
+---
+
+## iOS App Project
+
+A native iOS 26 reading list app is planned. Full brief — all decisions, feature ideas, tech stack, Supabase connection details, build order, and development setup — is documented in:
+
+**`ios-app-brief.md`** (root of this repo)
+
+Read that file before starting any iOS app work. Key points:
+- SwiftUI, iOS 26 target, Liquid Glass design language
+- Same Supabase backend as the website (shared data)
+- On-device AI via Foundation Models (`FoundationModels` framework) — Enrich button, auto-tagging, TL;DR summaries
+- No Share Extension (deliberately skipped — avoid $99/year dev account requirement)
+- Saving articles stays via existing iOS Shortcut/bookmarklet flow
+- App lives in `/ios/` subfolder of this repo
+
+---
+
 *Last updated: 2026-03-21 by Claude Code*
