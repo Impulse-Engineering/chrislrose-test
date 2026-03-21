@@ -380,6 +380,13 @@ main {
   border-radius: var(--radius-sm);
 }
 
+/* Secondary tags (user-added freeform tags) */
+.tag.tag-secondary {
+  color: var(--color-text-muted);
+  background: transparent;
+  border-color: var(--color-border);
+}
+
 /* About Page */
 .about-layout {
   display: grid;
@@ -1914,11 +1921,20 @@ body.glitch-active::after {
   overflow: hidden;
 }
 
+.link-card-note-box {
+  margin: 0.5rem 0;
+  padding: 0.45rem 0.7rem;
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-accent-dim);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
 .link-card-note {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-style: italic;
   color: var(--color-accent);
-  line-height: 1.5;
+  line-height: 1.55;
+  margin: 0;
 }
 
 .link-card-note::before { content: '\201C'; }
@@ -2147,7 +2163,7 @@ body.glitch-active::after {
 }
 
 .links-grid--compact .link-card-description,
-.links-grid--compact .link-card-note { display: none; }
+.links-grid--compact .link-card-note-box { display: none; }
 
 .links-grid--compact .link-card-meta {
   margin: 0;
@@ -2358,22 +2374,23 @@ body:not(.admin-mode) .link-card-action-btn.delete { display: none; }
   padding-left: 2.8rem;
 }
 
-/* Unread badge */
-.link-card-unread-badge {
+/* Status badge */
+.link-card-status-badge {
   position: absolute;
   top: 0.5rem;
   left: 0.5rem;
-  background: #f59e0b;
-  color: #000;
   font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   padding: 0.18rem 0.5rem;
   border-radius: var(--radius-sm);
   z-index: 10;
   pointer-events: none;
 }
+.link-card-status-badge.status-to-read  { background: rgba(245,158,11,0.2);  color: #f59e0b; }
+.link-card-status-badge.status-to-try   { background: rgba(139,92,246,0.2);  color: #a78bfa; }
+.link-card-status-badge.status-to-share { background: rgba(16,185,129,0.2);  color: #34d399; }
+.link-card-status-badge.status-done     { background: rgba(107,114,128,0.2); color: #9ca3af; }
 
 /* Shuffle highlight pulse */
 @keyframes card-shuffle-pulse {

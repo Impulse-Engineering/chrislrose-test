@@ -75,6 +75,13 @@
         <div class="filter-tabs" id="filter-tabs">
           <!-- Populated by reading-list.js -->
         </div>
+        <select class="filter-sort" id="filter-status" aria-label="Filter by status">
+          <option value="all">All statuses</option>
+          <option value="to-read">📖 To Read</option>
+          <option value="to-try">⚡ To Try</option>
+          <option value="to-share">💌 To Share</option>
+          <option value="done">✓ Done</option>
+        </select>
         <select class="filter-sort" id="filter-sort" aria-label="Sort order">
           <option value="newest">Newest</option>
           <option value="stars">Top Rated</option>
@@ -242,8 +249,22 @@
         <textarea id="link-note" style="min-height:60px;" placeholder="Why I saved this…"></textarea>
       </div>
       <div class="form-group">
+        <label for="link-status">Status</label>
+        <select id="link-status" class="filter-sort" style="width:100%;padding:0.65rem 0.9rem;">
+          <option value="">— No status —</option>
+          <option value="to-read">📖 To Read</option>
+          <option value="to-try">⚡ To Try</option>
+          <option value="to-share">💌 To Share</option>
+          <option value="done">✓ Done</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label for="link-category">Category</label>
         <select id="link-category" class="filter-sort" style="width:100%;padding:0.65rem 0.9rem;"></select>
+      </div>
+      <div class="form-group">
+        <label for="link-tags">Tags <span style="font-weight:400;color:var(--color-text-dim);">(comma separated)</span></label>
+        <input type="text" id="link-tags" placeholder="e.g. ai, claude, tools" autocomplete="off" />
       </div>
       <div class="form-group">
         <label>Rating</label>
@@ -254,10 +275,6 @@
           <span class="star" data-value="4" role="radio" aria-label="4 stars" tabindex="0">&#9733;</span>
           <span class="star" data-value="5" role="radio" aria-label="5 stars" tabindex="0">&#9733;</span>
         </div>
-      </div>
-      <div class="form-group" style="display:flex;align-items:center;gap:0.75rem;flex-direction:row;">
-        <input type="checkbox" id="link-unread" style="width:auto;margin:0;" />
-        <label for="link-unread" style="text-transform:none;letter-spacing:0;font-size:0.875rem;margin:0;">Save for later — I haven't read this yet</label>
       </div>
       <div class="form-group" style="display:flex;align-items:center;gap:0.75rem;flex-direction:row;">
         <input type="checkbox" id="link-private" style="width:auto;margin:0;" />
@@ -313,6 +330,6 @@
   <script src="command-palette.js" defer></script>
   <script src="easter-egg.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="reading-list.js?v=1774076451" defer></script>
+  <script src="reading-list.js?v=1774077660" defer></script>
 </body>
 </html>
