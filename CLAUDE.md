@@ -78,6 +78,26 @@ loaded from CDN.
 
 ---
 
+## Reading List — Key Features
+
+### Share / Collections
+The "Curate" button in the filter bar enters selection mode. You pick links, optionally add a recipient name and message, then click "Create share link." This saves a `collections` record in Supabase containing the selected link IDs and generates a URL (`?collection=abc123`) you can send to anyone. Recipients see a collection banner at the top with the recipient name, message, and article count.
+
+The copy (🔗) button on each card copies that single link's URL to clipboard.
+
+### Link data model
+Each link has: `url`, `title`, `description`, `image`, `favicon`, `domain`, `category` (single, from dropdown), `tags` (freeform comma-separated text), `stars` (1–5), `note` (personal note, visible to visitors), `status` (`to-read` / `to-try` / `to-share` / `done` / null), `read` (boolean kept in sync with status for backwards compat), `private`, `saved_at`.
+
+### Supabase tables
+- `links` — all saved links
+- `categories` — managed list with `name` + `sort_order`
+- `collections` — shared curated link bundles (`id`, `recipient`, `message`, `link_ids[]`, `created_at`)
+
+### Admin
+Admin access is via a FAB button (bottom-right). Logging in activates `admin-mode` class on `<body>`, which shows edit/delete/status buttons on cards. Admin can add, edit, delete links and manage categories.
+
+---
+
 ## Deployment
 
 - **Primary host:** Company-managed hosting environment — can run any server software
