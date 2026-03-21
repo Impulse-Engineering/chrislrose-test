@@ -1780,7 +1780,7 @@ body.glitch-active::after {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow: visible; /* was: hidden — iOS Safari drops touch events on position:absolute children inside overflow:hidden */
   display: flex;
   flex-direction: column;
   will-change: transform, box-shadow;
