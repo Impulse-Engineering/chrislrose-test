@@ -463,16 +463,16 @@
         ? '<span class="link-card-unread-badge">Unread</span>'
         : '';
       var readToggleBtn = state.isAdmin
-        ? '<button class="link-card-action-btn read-toggle" data-id="' + escAttr(link.id) + '" aria-label="' + (link.read === false ? 'Mark as read' : 'Mark as unread') + '" title="' + (link.read === false ? 'Mark as read' : 'Mark as unread') + '">' + (link.read === false ? '&#10003;' : '&#9675;') + '</button>'
+        ? '<button class="link-card-read-btn" data-id="' + escAttr(link.id) + '" aria-label="' + (link.read === false ? 'Mark as read' : 'Mark as unread') + '" title="' + (link.read === false ? 'Mark as read' : 'Mark as unread') + '">' + (link.read === false ? '&#10003;' : '&#9675;') + '</button>'
         : '';
 
       card.innerHTML =
         '<div class="link-card-actions">' +
           '<button class="link-card-action-btn copy" data-id="' + escAttr(link.id) + '" data-url="' + escAttr(link.url) + '" aria-label="Copy link">&#128279;</button>' +
-          readToggleBtn +
           '<button class="link-card-action-btn edit" data-id="' + escAttr(link.id) + '" aria-label="Edit link">&#9998;</button>' +
           '<button class="link-card-action-btn delete" data-id="' + escAttr(link.id) + '" aria-label="Delete link">&times;</button>' +
         '</div>' +
+        readToggleBtn +
         unreadBadge +
         '<a href="' + escAttr(link.url) + '" target="_blank" rel="noopener noreferrer" tabindex="-1" aria-hidden="true" style="display:block;text-decoration:none;">' +
           imgHtml +
@@ -505,14 +505,12 @@
       });
 
       if (state.isAdmin) {
-        var readToggleEl = card.querySelector('.link-card-action-btn.read-toggle');
-        function handleReadToggle(e) {
+        var readToggleEl = card.querySelector('.link-card-read-btn');
+        readToggleEl.addEventListener('click', function (e) {
           e.preventDefault();
           e.stopPropagation();
           toggleRead(link.id);
-        }
-        readToggleEl.addEventListener('click', handleReadToggle);
-        readToggleEl.addEventListener('touchend', handleReadToggle);
+        });
       }
 
       card.querySelector('.link-card-action-btn.edit').addEventListener('click', function (e) {

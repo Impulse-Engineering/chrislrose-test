@@ -1783,7 +1783,6 @@ body.glitch-active::after {
   overflow: visible; /* was: hidden — iOS Safari drops touch events on position:absolute children inside overflow:hidden */
   display: flex;
   flex-direction: column;
-  will-change: transform, box-shadow;
   transition: box-shadow 280ms cubic-bezier(0.4,0,0.2,1),
               transform   280ms cubic-bezier(0.4,0,0.2,1),
               border-color 280ms cubic-bezier(0.4,0,0.2,1);
@@ -1791,6 +1790,7 @@ body.glitch-active::after {
 }
 
 .link-card:hover {
+  will-change: transform, box-shadow;
   box-shadow: 0 0 0 1px rgba(88,166,255,0.2),
               0 8px 32px rgba(0,0,0,0.6),
               0 0 40px rgba(88,166,255,0.07);
@@ -2308,10 +2308,55 @@ body.glitch-active::after {
 /* Copy button visible on hover for everyone; other admin buttons only in admin mode */
 .link-card:hover .link-card-actions { display: flex; }
 .admin-mode .link-card-actions { display: flex; }
-/* Hide edit/delete/read-toggle when not in admin mode */
+/* Hide edit/delete when not in admin mode */
 body:not(.admin-mode) .link-card-action-btn.edit,
-body:not(.admin-mode) .link-card-action-btn.delete,
-body:not(.admin-mode) .link-card-action-btn.read-toggle { display: none; }
+body:not(.admin-mode) .link-card-action-btn.delete { display: none; }
+
+/* Standalone read-toggle button — always visible in admin mode, never depends on hover */
+.link-card-read-btn {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 0.6rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1;
+  z-index: 10;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(245,158,11,0.25);
+  transition: border-color 150ms, color 150ms, background 150ms;
+  pointer-events: auto;
+}
+.admin-mode .link-card-read-btn { display: flex; }
+.link-card-read-btn:hover,
+.link-card-read-btn:active {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  background: rgba(245,158,11,0.12);
+}
+/* In compact mode — vertically centered on the left */
+.links-grid--compact .link-card-read-btn {
+  bottom: auto;
+  right: auto;
+  top: 50%;
+  left: 0.5rem;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  font-size: 0.8rem;
+}
+/* Make room for read button on the left in admin mode */
+.admin-mode .links-grid--compact .link-card {
+  padding-left: 2.8rem;
+}
 
 /* Unread badge */
 .link-card-unread-badge {
@@ -2370,11 +2415,6 @@ body:not(.admin-mode) .link-card-action-btn.read-toggle { display: none; }
   background: rgba(248,81,73,0.12);
 }
 
-.link-card-action-btn.read-toggle:hover {
-  border-color: #f59e0b;
-  color: #f59e0b;
-  background: rgba(245,158,11,0.12);
-}
 
 /* Admin "Add Link" button — hidden until admin-mode */
 .admin-add-btn { display: none !important; }
