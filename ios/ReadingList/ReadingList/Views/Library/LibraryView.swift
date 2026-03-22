@@ -11,6 +11,7 @@ struct LibraryView: View {
     @State private var selectedIndex: Int = 0
     @State private var appeared = true
     @State private var showProfile = false
+    @State private var showSources = false
     @State private var isCurating = false
     @State private var curateSelection: Set<String> = []
     @State private var showCurateSheet = false
@@ -79,6 +80,10 @@ struct LibraryView: View {
                 .environment(vm)
                 .environment(authVM)
         }
+        .sheet(isPresented: $showSources) {
+            SourcesView()
+                .environment(vm)
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if let progress = vm.enrichAllProgress {
                 HStack(spacing: 12) {
@@ -142,37 +147,63 @@ struct LibraryView: View {
 
     // MARK: - Article List
 
+    var isDoTab: Bool { statusFilter == "to-try" }
+
     var articleList: some View {
         List {
-            ForEach(Array(displayedLinks.enumerated()), id: \.element.id) { index, link in
-                Group {
-                    if viewMode == "cards" {
-                        ArticleCardView(link: link)
-                    } else {
-                        ArticleRowView(link: link)
-                    }
-                }
-                .overlay(alignment: .topTrailing) {
-                    if isCurating {
-                        Image(systemName: curateSelection.contains(link.id) ? "checkmark.circle.fill" : "circle")
-                            .font(.title3)
-                            .foregroundStyle(curateSelection.contains(link.id) ? Color.accentColor : .secondary)
-                            .padding(12)
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    if isCurating {
-                        if curateSelection.contains(link.id) {
-                            curateSelection.remove(link.id)
-                        } else {
-                            _ = curateSelection.insert(link.id)
+            if isDoTab {
+                // Task-style list for Do tab
+                ForEach(displayedLinks) { link in
+                    TaskRowView(link: link, onToggleDone: {
+                        Task { await vm.updateStatus(link: link, status: "done") }
+                    }, onTap: {
+                        if let idx = displayedLinks.firstIndex(where: { $0.id == link.id }) {
+                            selectedIndex = idx
+                            selectedLink = link
                         }
-                    } else {
-                        selectedIndex = index
-                        selectedLink = link
+                    })
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                    .listRowBackground(Color.clear)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            Task { await vm.delete(link: link) }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
                     }
                 }
+            } else {
+                // Standard card/row list
+                ForEach(Array(displayedLinks.enumerated()), id: \.element.id) { index, link in
+                    Group {
+                        if viewMode == "cards" {
+                            ArticleCardView(link: link)
+                        } else {
+                            ArticleRowView(link: link)
+                        }
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        if isCurating {
+                            Image(systemName: curateSelection.contains(link.id) ? "checkmark.circle.fill" : "circle")
+                                .font(.title3)
+                                .foregroundStyle(curateSelection.contains(link.id) ? Color.accentColor : .secondary)
+                                .padding(12)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if isCurating {
+                            if curateSelection.contains(link.id) {
+                                curateSelection.remove(link.id)
+                            } else {
+                                _ = curateSelection.insert(link.id)
+                            }
+                        } else {
+                            selectedIndex = index
+                            selectedLink = link
+                        }
+                    }
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     Button {
                         Task { await vm.updateStatus(link: link, status: link.status == "done" ? nil : "done") }
@@ -207,6 +238,7 @@ struct LibraryView: View {
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 .listRowBackground(Color.clear)
             }
+            } // end else (standard list)
         }
         .listStyle(.plain)
         .refreshable { await vm.refresh() }
@@ -281,6 +313,11 @@ struct LibraryView: View {
     var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             Menu {
+                // Sources
+                Button { showSources = true } label: {
+                    Label("Sources", systemImage: "globe")
+                }
+
                 // Categories (sub-menu)
                 if !vm.categories.isEmpty {
                     Menu {
