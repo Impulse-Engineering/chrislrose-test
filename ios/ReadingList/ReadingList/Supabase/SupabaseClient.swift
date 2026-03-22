@@ -198,4 +198,36 @@ final class SupabaseClient {
             throw SupabaseError.update
         }
     }
+
+    // MARK: - Collections
+
+    func createCollection(recipient: String?, message: String?, linkIds: [String]) async throws -> String {
+        let collectionId = String(Int(Date().timeIntervalSince1970 * 1000), radix: 36)
+
+        let url = URL(string: "\(Config.baseURL)/rest/v1/collections")!
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(Config.anonKey, forHTTPHeaderField: "apikey")
+        if let token = accessToken {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        var body: [String: Any] = [
+            "id": collectionId,
+            "link_ids": linkIds,
+            "created_at": ISO8601DateFormatter().string(from: Date())
+        ]
+        if let r = recipient, !r.isEmpty { body["recipient"] = r }
+        if let m = message, !m.isEmpty { body["message"] = m }
+
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (_, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw SupabaseError.update
+        }
+
+        return collectionId
+    }
 }

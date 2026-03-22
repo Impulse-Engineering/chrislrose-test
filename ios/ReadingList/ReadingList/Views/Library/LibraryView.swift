@@ -9,8 +9,11 @@ struct LibraryView: View {
 
     @State private var selectedLink: Link? = nil
     @State private var selectedIndex: Int = 0
-    @State private var appeared = true  // No stagger animation — show immediately
+    @State private var appeared = true
     @State private var showProfile = false
+    @State private var isCurating = false
+    @State private var curateSelection: Set<String> = []
+    @State private var showCurateSheet = false
     @AppStorage("libraryViewMode") private var viewMode: String = "cards"
 
     var navTitle: String {
@@ -102,6 +105,39 @@ struct LibraryView: View {
             }
         }
         .animation(.spring(duration: 0.35), value: vm.errorMessage)
+        .overlay(alignment: .bottom) {
+            if isCurating {
+                HStack {
+                    Button("Cancel") {
+                        withAnimation { isCurating = false; curateSelection.removeAll() }
+                    }
+                    .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(curateSelection.count) selected")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    Spacer()
+                    Button("Create Link") {
+                        showCurateSheet = true
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(curateSelection.isEmpty)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(.regularMaterial)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(duration: 0.3), value: isCurating)
+        .sheet(isPresented: $showCurateSheet) {
+            CurateSheetView(
+                selectedLinks: displayedLinks.filter { curateSelection.contains($0.id) }
+            ) {
+                isCurating = false
+                curateSelection.removeAll()
+            }
+        }
     }
 
     // MARK: - Article List
@@ -128,12 +164,28 @@ struct LibraryView: View {
                         .delay(Double(min(index, 8)) * 0.04),
                         value: appeared
                     )
+                    .overlay(alignment: .topTrailing) {
+                        if isCurating {
+                            Image(systemName: curateSelection.contains(link.id) ? "checkmark.circle.fill" : "circle")
+                                .font(.title3)
+                                .foregroundStyle(curateSelection.contains(link.id) ? Color.accentColor : .secondary)
+                                .padding(12)
+                        }
+                    }
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        selectedIndex = index
-                        selectedLink = link
+                        if isCurating {
+                            if curateSelection.contains(link.id) {
+                                curateSelection.remove(link.id)
+                            } else {
+                                _ = curateSelection.insert(link.id)
+                            }
+                        } else {
+                            selectedIndex = index
+                            selectedLink = link
+                        }
                     }
-                    .contextMenu { contextMenu(for: link) }
+                    .contextMenu { if !isCurating { contextMenu(for: link) } }
                 }
             }
             .padding(.vertical, 12)
@@ -246,6 +298,15 @@ struct LibraryView: View {
                         vm.sortByStars = true
                     } label: {
                         Label("Highest Rated", systemImage: vm.sortByStars ? "checkmark" : "star.fill")
+                    }
+                }
+
+                // Curate
+                Section("Share") {
+                    Button {
+                        withAnimation { isCurating = true; curateSelection.removeAll() }
+                    } label: {
+                        Label("Curate Collection", systemImage: "rectangle.stack.badge.plus")
                     }
                 }
 
