@@ -9,7 +9,7 @@ struct LibraryView: View {
 
     @State private var selectedLink: Link? = nil
     @State private var selectedIndex: Int = 0
-    @State private var appeared = false
+    @State private var appeared = true  // No stagger animation — show immediately
     @State private var showProfile = false
     @AppStorage("libraryViewMode") private var viewMode: String = "cards"
 
@@ -102,11 +102,6 @@ struct LibraryView: View {
             }
         }
         .animation(.spring(duration: 0.35), value: vm.errorMessage)
-        .onAppear {
-            withAnimation(.spring(duration: 0.6, bounce: 0.3).delay(0.1)) {
-                appeared = true
-            }
-        }
     }
 
     // MARK: - Article List
