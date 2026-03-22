@@ -4,6 +4,7 @@ import SwiftUI
 // MARK: - Data
 
 struct WidgetLink: Codable {
+    let id: String
     let title: String?
     let domain: String?
     let status: String?
@@ -11,7 +12,7 @@ struct WidgetLink: Codable {
     let savedAt: Date?
 
     enum CodingKeys: String, CodingKey {
-        case title, domain, status, image
+        case id, title, domain, status, image
         case savedAt = "saved_at"
     }
 }
@@ -25,11 +26,16 @@ struct ReadingEntry: TimelineEntry {
 
 struct WidgetArticle: Identifiable {
     let id = UUID()
+    let linkId: String
     let title: String
     let domain: String
     let timeAgo: String
-    let imageURL: URL?
+    let thumbnail: UIImage?
     let statusLabel: String?
+
+    var deepLink: URL? {
+        URL(string: "procrastinate://article/\(linkId)")
+    }
 }
 
 // MARK: - Provider
@@ -37,8 +43,8 @@ struct WidgetArticle: Identifiable {
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> ReadingEntry {
         ReadingEntry(date: .now, articles: [
-            WidgetArticle(title: "Loading your articles...", domain: "procrastinate", timeAgo: "now", imageURL: nil, statusLabel: "To Read"),
-            WidgetArticle(title: "Pull to refresh in the app", domain: "procrastinate", timeAgo: "now", imageURL: nil, statusLabel: nil),
+            WidgetArticle(linkId: "", title: "Loading your articles...", domain: "procrastinate", timeAgo: "now", imageURL: nil, statusLabel: "To Read"),
+            WidgetArticle(linkId: "", title: "Pull to refresh in the app", domain: "procrastinate", timeAgo: "now", imageURL: nil, statusLabel: nil),
         ])
     }
 
@@ -64,7 +70,7 @@ struct Provider: TimelineProvider {
         }
 
         comps.queryItems = [
-            URLQueryItem(name: "select", value: "title,domain,status,image,saved_at"),
+            URLQueryItem(name: "select", value: "id,title,domain,status,image,saved_at"),
             URLQueryItem(name: "order", value: "saved_at.desc"),
             URLQueryItem(name: "limit", value: "3"),
             URLQueryItem(name: "private", value: "eq.false")
@@ -96,14 +102,23 @@ struct Provider: TimelineProvider {
             }
 
             let links = try decoder.decode([WidgetLink].self, from: data)
-            let articles = links.map { link in
-                WidgetArticle(
+            // Download thumbnails
+            var articles: [WidgetArticle] = []
+            for link in links {
+                var thumb: UIImage? = nil
+                if let imgStr = link.image, let imgURL = URL(string: imgStr) {
+                    if let (imgData, _) = try? await URLSession.shared.data(from: imgURL) {
+                        thumb = UIImage(data: imgData)
+                    }
+                }
+                articles.append(WidgetArticle(
+                    linkId: link.id,
                     title: link.title ?? "Untitled",
                     domain: link.domain ?? "",
                     timeAgo: timeAgo(from: link.savedAt),
-                    imageURL: link.image.flatMap { URL(string: $0) },
+                    thumbnail: thumb,
                     statusLabel: statusLabel(for: link.status)
-                )
+                ))
             }
             return ReadingEntry(date: .now, articles: articles)
         } catch {
@@ -155,7 +170,13 @@ struct ReadlingListWidgetEntryView: View {
             // Article rows
             let count = family == .systemSmall ? 1 : 2
             ForEach(Array(entry.articles.prefix(count).enumerated()), id: \.element.id) { index, article in
-                articleRow(article)
+                if let deepLink = article.deepLink {
+                    SwiftUI.Link(destination: deepLink) {
+                        articleRow(article)
+                    }
+                } else {
+                    articleRow(article)
+                }
                 if index < count - 1 && index < entry.articles.count - 1 {
                     Spacer(minLength: 6)
                 }
@@ -169,14 +190,10 @@ struct ReadlingListWidgetEntryView: View {
         HStack(spacing: 12) {
             // Square thumbnail
             Group {
-                if let imageURL = article.imageURL {
-                    // WidgetKit doesn't support AsyncImage — use placeholder
-                    // The image will show after WidgetKit caches it
-                    Color(.systemGray4)
-                        .overlay {
-                            NetworkImage(url: imageURL)
-                        }
-                        .clipped()
+                if let thumb = article.thumbnail {
+                    Image(uiImage: thumb)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
                 } else {
                     ZStack {
                         LinearGradient(
@@ -224,30 +241,6 @@ struct ReadlingListWidgetEntryView: View {
     }
 }
 
-// MARK: - Network Image for Widgets
-
-struct NetworkImage: View {
-    let url: URL
-    @State private var image: UIImage?
-
-    var body: some View {
-        Group {
-            if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                Color.clear
-            }
-        }
-        .task {
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                self.image = UIImage(data: data)
-            } catch {}
-        }
-    }
-}
 
 // MARK: - Widget Configuration
 
@@ -274,8 +267,8 @@ struct ReadlingListWidget: Widget {
     ReadlingListWidget()
 } timeline: {
     ReadingEntry(date: .now, articles: [
-        WidgetArticle(title: "The Case for an Ultralight Mac That Does Less", domain: "512pixels.net", timeAgo: "2h ago", imageURL: nil, statusLabel: "To Read"),
-        WidgetArticle(title: "AI-Washing Layoffs + Why LLMs Can't Write Well", domain: "podcasts.apple.com", timeAgo: "5h ago", imageURL: nil, statusLabel: "To Do"),
+        WidgetArticle(linkId: "1", title: "The Case for an Ultralight Mac That Does Less", domain: "512pixels.net", timeAgo: "2h ago", thumbnail: nil, statusLabel: "To Read"),
+        WidgetArticle(linkId: "2", title: "AI-Washing Layoffs + Why LLMs Can't Write Well", domain: "podcasts.apple.com", timeAgo: "5h ago", thumbnail: nil, statusLabel: "To Do"),
     ])
 }
 
@@ -283,6 +276,6 @@ struct ReadlingListWidget: Widget {
     ReadlingListWidget()
 } timeline: {
     ReadingEntry(date: .now, articles: [
-        WidgetArticle(title: "The Case for an Ultralight Mac", domain: "512pixels.net", timeAgo: "2h ago", imageURL: nil, statusLabel: "To Read"),
+        WidgetArticle(linkId: "1", title: "The Case for an Ultralight Mac", domain: "512pixels.net", timeAgo: "2h ago", thumbnail: nil, statusLabel: "To Read"),
     ])
 }

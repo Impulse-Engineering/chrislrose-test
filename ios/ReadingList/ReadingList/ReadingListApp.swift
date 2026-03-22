@@ -5,6 +5,7 @@ import UserNotifications
 struct ReadingListApp: App {
     @State private var authVM = AuthViewModel()
     @State private var showDigest = false
+    @State private var deepLinkArticleId: String? = nil
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
@@ -20,6 +21,16 @@ struct ReadingListApp: App {
             }
             .animation(.spring(duration: 0.5, bounce: 0.3), value: authVM.isAuthenticated)
             .preferredColorScheme(.dark)
+            .onOpenURL { url in
+                // Handle deep links from widget: procrastinate://article/ARTICLE_ID
+                if url.scheme == "procrastinate", url.host == "article" {
+                    let articleId = url.lastPathComponent
+                    // Small delay to let the app finish launching
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        deepLinkArticleId = articleId
+                    }
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: .openDigest)) { _ in
                 showDigest = true
             }
@@ -28,6 +39,19 @@ struct ReadingListApp: App {
                     DigestView()
                         .environment(ContentView.sharedLibraryVM)
                 }
+            }
+            .fullScreenCover(item: Binding(
+                get: {
+                    guard let id = deepLinkArticleId else { return nil }
+                    return ContentView.sharedLibraryVM.allLinks.first { $0.id == id }
+                },
+                set: { _ in deepLinkArticleId = nil }
+            )) { link in
+                ArticleReaderContainer(
+                    links: [link],
+                    initialIndex: 0,
+                    vm: ContentView.sharedLibraryVM
+                )
             }
         }
     }
