@@ -14,30 +14,27 @@ struct ArticleCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Inset image — fixed height for all cards
-            if let rawURL = link.image, let imageURL = URL(string: rawURL) {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .success(let img):
-                        img.resizable()
-                            .aspectRatio(contentMode: .fill)
-                    default:
+            // Inset image — fixed height, always full width
+            Color.clear
+                .frame(height: 200)
+                .overlay {
+                    if let rawURL = link.image, let imageURL = URL(string: rawURL) {
+                        AsyncImage(url: imageURL) { phase in
+                            switch phase {
+                            case .success(let img):
+                                img.resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            default:
+                                fallbackImage
+                            }
+                        }
+                    } else {
                         fallbackImage
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 200)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .padding(8)
-            } else {
-                fallbackImage
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 200)
-                    .clipped()
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .padding(8)
-            }
 
             // Title
             Text(link.title ?? link.url)
