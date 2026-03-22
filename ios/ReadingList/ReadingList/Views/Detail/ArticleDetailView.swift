@@ -17,46 +17,47 @@ struct ArticleDetailView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            // Layer 1: Full-screen blurred background
-            backgroundLayer
-                .ignoresSafeArea()
+        ZStack(alignment: .topTrailing) {
+            // Full-screen blurred background
+            backgroundLayer.ignoresSafeArea()
 
-            // Layer 2: Scrollable content
+            // Content
             ScrollView {
-                VStack(spacing: 0) {
-                    // Hero image (top, ~300pt)
+                VStack(spacing: 12) {
+                    // Hero image
                     heroSection
 
-                    // Content cards
-                    VStack(spacing: 12) {
+                    // Cards
+                    VStack(spacing: 10) {
                         titleCard
                         readButton
                         ratingAndStatusCard
                         noteCard
-                        if currentLink.category != nil || (currentLink.tags != nil && !currentLink.tags!.isEmpty) {
+                        if currentLink.category != nil || hasTagContent {
                             metaCard
                         }
                     }
                     .padding(.horizontal, 16)
-                    .padding(.top, 16)
                     .padding(.bottom, 60)
                 }
             }
-            .ignoresSafeArea(edges: .top)
 
-            // Layer 3: Floating nav buttons (X + share)
-            HStack {
-                glassNavButton(icon: "square.and.arrow.up") { shareArticle() }
-                Spacer()
-                glassNavButton(icon: "xmark") { dismiss() }
+            // Floating close + share buttons
+            HStack(spacing: 12) {
+                navButton(icon: "square.and.arrow.up") { shareArticle() }
+                navButton(icon: "xmark") { dismiss() }
             }
-            .padding(.horizontal, 20)
             .padding(.top, 56)
+            .padding(.trailing, 20)
         }
         .sheet(isPresented: $showReader) {
             WebReaderView(url: currentLink.url, title: currentLink.title ?? currentLink.url)
         }
+    }
+
+    var hasTagContent: Bool {
+        if let tags = currentLink.tags { return !tags.isEmpty }
+        return false
     }
 
     // MARK: - Background
@@ -69,25 +70,24 @@ struct ArticleDetailView: View {
                     img.resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .blur(radius: 50)
-                        .saturation(0.7)
-                        .overlay(Color.black.opacity(0.45))
+                        .blur(radius: 60)
+                        .saturation(0.6)
+                        .overlay(Color.black.opacity(0.55))
                 } else {
-                    gradientBackground
+                    darkGradientBackground
                 }
             }
         } else {
-            gradientBackground
+            darkGradientBackground
         }
     }
 
-    var gradientBackground: some View {
+    var darkGradientBackground: some View {
         LinearGradient(
-            colors: domainGradient(for: currentLink.domain).map { $0.opacity(0.8) },
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
+            colors: domainGradient(for: currentLink.domain).map { $0.opacity(0.6) } + [Color.black.opacity(0.3)],
+            startPoint: .top,
+            endPoint: .bottom
         )
-        .overlay(Color.black.opacity(0.4))
     }
 
     // MARK: - Hero
@@ -99,7 +99,8 @@ struct ArticleDetailView: View {
                 if case .success(let img) = phase {
                     img.resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(height: 300)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 280)
                         .clipped()
                 } else {
                     fallbackHero
@@ -112,18 +113,15 @@ struct ArticleDetailView: View {
 
     var fallbackHero: some View {
         ZStack {
-            LinearGradient(
-                colors: domainGradient(for: currentLink.domain),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            LinearGradient(colors: domainGradient(for: currentLink.domain),
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
             if let first = currentLink.domain?.first {
                 Text(String(first).uppercased())
                     .font(.system(size: 80, weight: .black, design: .rounded))
                     .foregroundStyle(.white.opacity(0.2))
             }
         }
-        .frame(height: 260)
+        .frame(height: 240)
     }
 
     // MARK: - Title Card
@@ -131,62 +129,50 @@ struct ArticleDetailView: View {
     var titleCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                if let rawFavicon = currentLink.favicon, let faviconURL = URL(string: rawFavicon) {
-                    AsyncImage(url: faviconURL) { phase in
-                        if case .success(let img) = phase {
-                            img.resizable().frame(width: 16, height: 16).clipShape(Circle())
-                        }
-                    }
-                }
+                faviconView
                 Text(currentLink.domain ?? "")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.subheadline).foregroundStyle(.secondary)
                 Spacer()
                 if let savedAt = currentLink.savedAt {
                     Text(savedAt.formatted(date: .abbreviated, time: .omitted))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
-
             Text(currentLink.title ?? currentLink.url)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundStyle(.primary)
-
-            if let description = currentLink.description {
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
+                .font(.title2).fontWeight(.bold).foregroundStyle(.primary)
+            if let desc = currentLink.description {
+                Text(desc).font(.subheadline).foregroundStyle(.secondary).lineLimit(3)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .glassCard()
+        .materialCard()
+    }
+
+    @ViewBuilder
+    var faviconView: some View {
+        if let rawFavicon = currentLink.favicon, let faviconURL = URL(string: rawFavicon) {
+            AsyncImage(url: faviconURL) { phase in
+                if case .success(let img) = phase {
+                    img.resizable().frame(width: 16, height: 16).clipShape(Circle())
+                }
+            }
+        }
     }
 
     // MARK: - Read Button
 
     var readButton: some View {
-        Button {
-            showReader = true
-        } label: {
+        Button { showReader = true } label: {
             HStack(spacing: 10) {
                 Image(systemName: "book.open.fill")
-                Text("Read Article")
-                    .fontWeight(.semibold)
+                Text("Read Article").fontWeight(.semibold)
             }
             .font(.headline)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .foregroundStyle(.white)
-            .background {
-                if #available(iOS 26, *) {
-                    Capsule().glassEffect(.regular)
-                } else {
-                    Capsule().fill(Color.accentColor)
-                }
-            }
+            .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 
@@ -196,17 +182,13 @@ struct ArticleDetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             // Stars
             VStack(alignment: .leading, spacing: 10) {
-                Label("Rating", systemImage: "star")
-                    .font(.footnote)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-
+                sectionLabel("Rating", icon: "star")
                 HStack(spacing: 8) {
                     ForEach(1...5, id: \.self) { i in
                         Button {
-                            let newStars = currentLink.stars == i ? 0 : i
-                            currentLink.stars = newStars
-                            Task { await vm.updateStars(link: link, stars: newStars) }
+                            let n = currentLink.stars == i ? 0 : i
+                            currentLink.stars = n
+                            Task { await vm.updateStars(link: link, stars: n) }
                         } label: {
                             Image(systemName: i <= (currentLink.stars ?? 0) ? "star.fill" : "star")
                                 .font(.title2)
@@ -223,11 +205,7 @@ struct ArticleDetailView: View {
 
             // Status
             VStack(alignment: .leading, spacing: 10) {
-                Label("Status", systemImage: "tag")
-                    .font(.footnote)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-
+                sectionLabel("Status", icon: "tag")
                 HStack(spacing: 8) {
                     ForEach(["to-read", "to-try", "to-share", "done"], id: \.self) { status in
                         let isSelected = currentLink.status == status
@@ -239,7 +217,7 @@ struct ArticleDetailView: View {
                         } label: {
                             StatusPill(status: status)
                                 .scaleEffect(isSelected ? 1.08 : 1)
-                                .opacity(currentLink.status == nil || isSelected ? 1 : 0.45)
+                                .opacity(currentLink.status == nil || isSelected ? 1 : 0.4)
                         }
                         .buttonStyle(.plain)
                         .animation(.spring(duration: 0.25, bounce: 0.5), value: currentLink.status)
@@ -247,60 +225,50 @@ struct ArticleDetailView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .glassCard()
+        .materialCard()
     }
 
     // MARK: - Note Card
 
     var noteCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Note", systemImage: "note.text")
-                .font(.footnote)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-
+            sectionLabel("Note", icon: "note.text")
             if isEditingNote {
                 TextEditor(text: $editedNote)
                     .frame(minHeight: 80)
                     .padding(8)
-                    .background(Color(.systemGray6))
+                    .background(Color(.systemGray5))
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-
                 HStack {
                     Button("Cancel") {
                         editedNote = currentLink.note ?? ""
                         isEditingNote = false
-                    }
-                    .foregroundStyle(.secondary)
+                    }.foregroundStyle(.secondary)
                     Spacer()
                     Button("Save") {
                         currentLink.note = editedNote.isEmpty ? nil : editedNote
                         isEditingNote = false
                         Task { await vm.updateNote(link: link, note: editedNote) }
-                    }
-                    .fontWeight(.semibold)
+                    }.fontWeight(.semibold)
                 }
             } else {
-                Button {
-                    isEditingNote = true
-                } label: {
+                Button { isEditingNote = true } label: {
                     if let note = currentLink.note, !note.isEmpty {
-                        Text(note)
-                            .font(.body)
-                            .foregroundStyle(.primary)
+                        Text(note).font(.body).foregroundStyle(.primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
                         Label("Add a note…", systemImage: "plus.circle")
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                }
-                .buttonStyle(.plain)
+                }.buttonStyle(.plain)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .glassCard()
+        .materialCard()
     }
 
     // MARK: - Meta Card
@@ -309,50 +277,42 @@ struct ArticleDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             if let category = currentLink.category {
                 VStack(alignment: .leading, spacing: 6) {
-                    Label("Category", systemImage: "folder")
-                        .font(.footnote)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.secondary)
+                    sectionLabel("Category", icon: "folder")
                     Text(category)
                         .font(.subheadline)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(Color.indigo.opacity(0.15))
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Color.indigo.opacity(0.2))
                         .foregroundStyle(.indigo)
                         .clipShape(Capsule())
                 }
             }
-
             if let tags = currentLink.tags, !tags.isEmpty {
                 if currentLink.category != nil { Divider() }
                 VStack(alignment: .leading, spacing: 6) {
-                    Label("Tags", systemImage: "tag")
-                        .font(.footnote)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.secondary)
+                    sectionLabel("Tags", icon: "tag")
                     FlowLayout(tags: tags.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) })
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .glassCard()
+        .materialCard()
     }
 
-    // MARK: - Floating Nav Buttons
+    // MARK: - Helpers
 
-    func glassNavButton(icon: String, action: @escaping () -> Void) -> some View {
+    func sectionLabel(_ text: String, icon: String) -> some View {
+        Label(text, systemImage: icon)
+            .font(.footnote).fontWeight(.semibold).foregroundStyle(.secondary)
+    }
+
+    func navButton(icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.white)
-                .frame(width: 40, height: 40)
-                .background {
-                    if #available(iOS 26, *) {
-                        Circle().glassEffect(.regular)
-                    } else {
-                        Circle().fill(.ultraThinMaterial)
-                    }
-                }
+                .frame(width: 36, height: 36)
+                .background(.ultraThinMaterial, in: Circle())
         }
     }
 
@@ -366,35 +326,26 @@ struct ArticleDetailView: View {
     }
 }
 
-// MARK: - Glass Card Modifier
+// MARK: - Material Card modifier
 
 extension View {
-    func glassCard() -> some View {
-        self.background {
-            if #available(iOS 26, *) {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .glassEffect(.regular)
-            } else {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(.regularMaterial)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    func materialCard() -> some View {
+        self.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
+
+    // Keep glassCard for backwards compatibility
+    func glassCard() -> some View { materialCard() }
 }
 
-// MARK: - Flow layout for tags
+// MARK: - Flow layout
 
 struct FlowLayout: View {
     let tags: [String]
-
     var body: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 60), spacing: 6)], alignment: .leading, spacing: 6) {
             ForEach(tags, id: \.self) { tag in
-                Text(tag)
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                Text(tag).font(.caption)
+                    .padding(.horizontal, 8).padding(.vertical, 4)
                     .background(Color(.systemGray5))
                     .foregroundStyle(.secondary)
                     .clipShape(Capsule())
