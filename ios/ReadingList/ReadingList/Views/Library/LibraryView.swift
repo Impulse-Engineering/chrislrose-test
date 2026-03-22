@@ -263,13 +263,13 @@ struct LibraryView: View {
     var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             Menu {
-                // Categories
+                // Categories (sub-menu)
                 if !vm.categories.isEmpty {
-                    Section("Category") {
+                    Menu {
                         Button {
                             vm.selectedCategory = nil
                         } label: {
-                            Label("All Categories", systemImage: vm.selectedCategory == nil ? "checkmark" : "folder")
+                            Label("All", systemImage: vm.selectedCategory == nil ? "checkmark" : "tray.full")
                         }
                         ForEach(vm.categories) { cat in
                             Button {
@@ -284,6 +284,8 @@ struct LibraryView: View {
                                 }
                             }
                         }
+                    } label: {
+                        Label(vm.selectedCategory ?? "Category", systemImage: "folder")
                     }
                 }
 
