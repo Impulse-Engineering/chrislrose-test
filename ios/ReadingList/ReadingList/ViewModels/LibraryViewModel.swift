@@ -140,7 +140,8 @@ final class LibraryViewModel {
     // MARK: - Enrich All (batch)
 
     var unenrichedLinks: [Link] {
-        allLinks.filter { $0.note == nil && ($0.tags == nil || $0.tags?.isEmpty == true) }
+        // Articles that have no AI-generated note (note is nil or empty)
+        allLinks.filter { $0.note == nil || ($0.note?.isEmpty == true) }
     }
 
     @available(iOS 26, *)

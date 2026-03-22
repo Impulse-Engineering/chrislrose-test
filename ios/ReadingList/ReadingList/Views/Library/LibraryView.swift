@@ -260,16 +260,16 @@ struct LibraryView: View {
                 }
 
                 // Enrich All
-                if !vm.unenrichedLinks.isEmpty {
-                    Section("AI") {
-                        Button {
-                            if #available(iOS 26, *) {
-                                Task { await vm.enrichAll() }
-                            }
-                        } label: {
-                            Label("Enrich All (\(vm.unenrichedLinks.count))", systemImage: "sparkles")
+                Section("AI") {
+                    Button {
+                        if #available(iOS 26, *) {
+                            Task { await vm.enrichAll() }
                         }
+                    } label: {
+                        let count = vm.unenrichedLinks.count
+                        Label(count > 0 ? "Enrich All (\(count))" : "All Enriched", systemImage: "sparkles")
                     }
+                    .disabled(vm.unenrichedLinks.isEmpty || vm.isEnrichingAll)
                 }
 
                 // Clear
