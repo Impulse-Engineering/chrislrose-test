@@ -43,8 +43,8 @@ struct WidgetArticle: Identifiable {
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> ReadingEntry {
         ReadingEntry(date: .now, articles: [
-            WidgetArticle(linkId: "", title: "Loading your articles...", domain: "procrastinate", timeAgo: "now", imageURL: nil, statusLabel: "To Read"),
-            WidgetArticle(linkId: "", title: "Pull to refresh in the app", domain: "procrastinate", timeAgo: "now", imageURL: nil, statusLabel: nil),
+            WidgetArticle(linkId: "", title: "Loading your articles...", domain: "procrastinate", timeAgo: "now", thumbnail: nil, statusLabel: "To Read"),
+            WidgetArticle(linkId: "", title: "Pull to refresh in the app", domain: "procrastinate", timeAgo: "now", thumbnail: nil, statusLabel: nil),
         ])
     }
 
