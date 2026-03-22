@@ -777,7 +777,7 @@
             if (pendingAddUrl) {
               var url = pendingAddUrl;
               pendingAddUrl = null;
-              setTimeout(function () { openAddModal(url); }, 100);
+              setTimeout(function () { quickSave(url); }, 100);
             }
           }
         });
@@ -1084,11 +1084,86 @@
       if (!addUrl) return;
       window.history.replaceState({}, '', window.location.pathname);
       if (state.isAdmin) {
-        openAddModal(addUrl);
+        quickSave(addUrl);
       } else {
         pendingAddUrl = addUrl;
         openAuthModal();
       }
+    }
+
+    // ── Quick Save (auto-save with no form) ─────────────────────
+    function quickSave(url) {
+      showToast('Saving…', 'info');
+
+      var domain = '';
+      try { domain = new URL(url).hostname.replace(/^www\./, ''); } catch (e) {}
+
+      // Check for YouTube oEmbed first
+      var ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+      var metaPromise;
+
+      if (ytMatch) {
+        metaPromise = fetch('https://www.youtube.com/oembed?url=' + encodeURIComponent(url) + '&format=json')
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            return {
+              title: d.title || '',
+              description: d.author_name ? 'By ' + d.author_name : '',
+              image: d.thumbnail_url || '',
+              favicon: 'https://www.google.com/s2/favicons?domain=youtube.com&sz=64'
+            };
+          });
+      } else {
+        metaPromise = fetch(MICROLINK + encodeURIComponent(url))
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.status !== 'success') throw new Error('microlink failed');
+            var d = data.data || {};
+            return {
+              title: d.title || '',
+              description: d.description || '',
+              image: (d.image && d.image.url) || '',
+              favicon: (d.logo && d.logo.url) || ('https://www.google.com/s2/favicons?domain=' + domain + '&sz=64')
+            };
+          });
+      }
+
+      metaPromise
+        .catch(function () {
+          // Metadata fetch failed — save with just the URL
+          return { title: '', description: '', image: '', favicon: '' };
+        })
+        .then(function (meta) {
+          var entry = {
+            id:          generateId(url),
+            url:         url,
+            title:       meta.title || url,
+            description: meta.description || null,
+            image:       meta.image || null,
+            favicon:     meta.favicon || null,
+            domain:      domain || null,
+            category:    null,
+            tags:        null,
+            stars:       0,
+            note:        null,
+            status:      'to-read',
+            read:        false,
+            private:     false,
+            saved_at:    new Date().toISOString()
+          };
+
+          return persistToSupabase(entry, false).then(function () {
+            // Add to local state
+            state.allLinks.unshift(entry);
+            applyFilters();
+            showToast('Saved: ' + (meta.title || domain || 'Link'), 'success');
+            // Auto-close after a brief moment (works when opened via bookmarklet window.open)
+            setTimeout(function () { window.close(); }, 1500);
+          });
+        })
+        .catch(function (err) {
+          showToast('Save failed: ' + err.message, 'error');
+        });
     }
 
     // ── Keyboard: Escape ─────────────────────────────────────────
