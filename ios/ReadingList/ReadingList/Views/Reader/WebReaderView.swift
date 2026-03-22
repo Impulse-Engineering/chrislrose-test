@@ -439,8 +439,9 @@ enum SharedWebConfig {
     static func makeConfiguration() -> WKWebViewConfiguration {
         let config = WKWebViewConfiguration()
         config.processPool = processPool
-        config.websiteDataStore = .default()  // Persistent — saves cookies, logins, localStorage
+        config.websiteDataStore = .default()
         config.allowsInlineMediaPlayback = true
+        config.preferences.javaScriptCanOpenWindowsAutomatically = true
         return config
     }
 }
@@ -448,9 +449,15 @@ enum SharedWebConfig {
 struct WebView: UIViewRepresentable {
     let url: URL
 
+    func makeCoordinator() -> WebViewCoordinator {
+        WebViewCoordinator()
+    }
+
     func makeUIView(context: Context) -> WKWebView {
         let webView = WKWebView(frame: .zero, configuration: SharedWebConfig.makeConfiguration())
         webView.allowsBackForwardNavigationGestures = true
+        webView.uiDelegate = context.coordinator
+        context.coordinator.parentWebView = webView
         return webView
     }
 
@@ -458,5 +465,31 @@ struct WebView: UIViewRepresentable {
         if webView.url == nil {
             webView.load(URLRequest(url: url))
         }
+    }
+}
+
+/// Handles OAuth popups (Sign in with Apple, Google, etc.)
+class WebViewCoordinator: NSObject, WKUIDelegate {
+    weak var parentWebView: WKWebView?
+    private var popupWebView: WKWebView?
+
+    func webView(
+        _ webView: WKWebView,
+        createWebViewWith configuration: WKWebViewConfiguration,
+        for navigationAction: WKNavigationAction,
+        windowFeatures: WKWindowFeatures
+    ) -> WKWebView? {
+        // If it's a popup (target="_blank" or window.open), load in the same webview
+        // This handles most OAuth flows including "Sign in with Apple"
+        if navigationAction.targetFrame == nil || !navigationAction.targetFrame!.isMainFrame {
+            if let url = navigationAction.request.url {
+                webView.load(URLRequest(url: url))
+            }
+        }
+        return nil
+    }
+
+    func webViewDidClose(_ webView: WKWebView) {
+        // Popup closed itself — nothing to do
     }
 }
