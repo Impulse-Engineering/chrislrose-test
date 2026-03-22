@@ -24,7 +24,7 @@ final class LibraryViewModel {
     var aiSearchResults: [Link]? = nil
 
     var hasActiveFilters: Bool {
-        selectedStatus != nil || selectedCategory != nil || sortByStars
+        selectedCategory != nil || sortByStars
     }
 
     var filteredLinks: [Link] {

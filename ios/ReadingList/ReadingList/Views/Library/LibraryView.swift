@@ -4,64 +4,99 @@ struct LibraryView: View {
     @Environment(LibraryViewModel.self) private var vm
     @Environment(AuthViewModel.self) private var authVM
 
+    /// nil = show all (Library tab), "to-read" = Read tab, "to-try" = Do tab
+    var statusFilter: String?
+
     @State private var selectedLink: Link? = nil
     @State private var selectedIndex: Int = 0
     @State private var appeared = false
+    @State private var showProfile = false
     @AppStorage("libraryViewMode") private var viewMode: String = "cards"
+
+    var navTitle: String {
+        switch statusFilter {
+        case "to-read": return "Read"
+        case "to-try": return "Do"
+        default: return "Library"
+        }
+    }
+
+    /// Articles for this tab, with additional filters applied
+    var displayedLinks: [Link] {
+        var result = vm.allLinks
+
+        // Tab-level status filter
+        if let sf = statusFilter {
+            result = result.filter { $0.status == sf }
+        }
+
+        // Additional filters from menu
+        if let category = vm.selectedCategory {
+            result = result.filter { $0.category == category }
+        }
+        if vm.sortByStars {
+            result = result.sorted { ($0.stars ?? 0) > ($1.stars ?? 0) }
+        }
+        if !vm.searchQuery.isEmpty {
+            let tokens = vm.searchQuery.lowercased().split(separator: " ").map(String.init)
+            result = result.filter { link in
+                let haystack = [link.title, link.description, link.note, link.domain, link.category, link.tags]
+                    .compactMap { $0 }.joined(separator: " ").lowercased()
+                return tokens.allSatisfy { haystack.contains($0) }
+            }
+        }
+        return result
+    }
 
     var body: some View {
         NavigationStack {
             Group {
                 if vm.isLoading && vm.allLinks.isEmpty {
                     loadingView
-                } else if vm.filteredLinks.isEmpty {
+                } else if displayedLinks.isEmpty {
                     emptyView
                 } else {
                     articleList
                 }
             }
-            .navigationTitle("Library")
+            .navigationTitle(navTitle)
             .navigationBarTitleDisplayMode(.large)
             .toolbar { toolbarContent }
             .background(Color(.systemBackground))
         }
         .fullScreenCover(item: $selectedLink) { link in
             ArticleReaderContainer(
-                links: vm.filteredLinks,
+                links: displayedLinks,
                 initialIndex: selectedIndex,
                 vm: vm
             )
         }
-        // Filter sheet removed — now uses inline Menu popover
+        .sheet(isPresented: $showProfile) {
+            ProfileView()
+                .environment(vm)
+                .environment(authVM)
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if let progress = vm.enrichAllProgress {
                 HStack(spacing: 12) {
-                    ProgressView()
-                        .scaleEffect(0.8)
+                    ProgressView().scaleEffect(0.8)
                     Text("Enriching \(progress.current) of \(progress.total)…")
-                        .font(.caption)
-                        .fontWeight(.medium)
+                        .font(.caption).fontWeight(.medium)
                     Spacer()
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 16).padding(.vertical, 10)
                 .background(.regularMaterial)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             } else if let error = vm.errorMessage {
                 HStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                    Text(error)
-                        .font(.caption)
-                        .lineLimit(2)
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text(error).font(.caption).lineLimit(2)
                     Spacer()
                     Button { vm.errorMessage = nil } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 16).padding(.vertical, 10)
                 .background(.regularMaterial)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -79,14 +114,14 @@ struct LibraryView: View {
     var articleList: some View {
         ScrollView {
             LazyVStack(spacing: viewMode == "cards" ? 16 : 0) {
-                ForEach(Array(vm.filteredLinks.enumerated()), id: \.element.id) { index, link in
+                ForEach(Array(displayedLinks.enumerated()), id: \.element.id) { index, link in
                     Group {
                         if viewMode == "cards" {
                             ArticleCardView(link: link)
                                 .padding(.horizontal, 16)
                         } else {
                             ArticleRowView(link: link)
-                            if index < vm.filteredLinks.count - 1 {
+                            if index < displayedLinks.count - 1 {
                                 Divider().padding(.leading, 16)
                             }
                         }
@@ -112,52 +147,7 @@ struct LibraryView: View {
         .refreshable { await vm.refresh() }
     }
 
-    // MARK: - Swipe Actions
-
-    @ViewBuilder
-    func trailingSwipeActions(for link: Link) -> some View {
-        Button(role: .destructive) {
-            Task { await vm.delete(link: link) }
-        } label: {
-            Label("Delete", systemImage: "trash")
-        }
-        Menu {
-            statusMenu(for: link)
-        } label: {
-            Label("Status", systemImage: "tag")
-        }
-        .tint(.blue)
-    }
-
-    @ViewBuilder
-    func leadingSwipeAction(for link: Link) -> some View {
-        let isDone = link.status == "done"
-        Button {
-            Task { await vm.updateStatus(link: link, status: isDone ? nil : "done") }
-        } label: {
-            Label(isDone ? "Unread" : "Done", systemImage: isDone ? "book" : "checkmark")
-        }
-        .tint(isDone ? .gray : .green)
-    }
-
-    @ViewBuilder
-    func statusMenu(for link: Link) -> some View {
-        ForEach(["to-read", "to-try", "to-share", "done"], id: \.self) { status in
-            Button {
-                Task { await vm.updateStatus(link: link, status: status) }
-            } label: {
-                Label(StatusPill(status: status).label, systemImage: statusIcon(status))
-            }
-        }
-        if link.status != nil {
-            Divider()
-            Button {
-                Task { await vm.updateStatus(link: link, status: nil) }
-            } label: {
-                Label("Clear Status", systemImage: "xmark.circle")
-            }
-        }
-    }
+    // MARK: - Context Menu
 
     @ViewBuilder
     func contextMenu(for link: Link) -> some View {
@@ -192,11 +182,29 @@ struct LibraryView: View {
         }
     }
 
+    @ViewBuilder
+    func statusMenu(for link: Link) -> some View {
+        ForEach(["to-read", "to-try", "done"], id: \.self) { status in
+            Button {
+                Task { await vm.updateStatus(link: link, status: status) }
+            } label: {
+                Label(StatusPill(status: status).label, systemImage: statusIcon(status))
+            }
+        }
+        if link.status != nil {
+            Divider()
+            Button {
+                Task { await vm.updateStatus(link: link, status: nil) }
+            } label: {
+                Label("Clear Status", systemImage: "xmark.circle")
+            }
+        }
+    }
+
     func statusIcon(_ status: String) -> String {
         switch status {
         case "to-read": return "book"
         case "to-try": return "hammer"
-        case "to-share": return "paperplane"
         case "done": return "checkmark.circle"
         default: return "circle"
         }
@@ -208,20 +216,7 @@ struct LibraryView: View {
     var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             Menu {
-                // Status section
-                Section("Status") {
-                    Button {
-                        vm.selectedStatus = nil
-                    } label: {
-                        Label("All", systemImage: vm.selectedStatus == nil ? "checkmark" : "tray.full")
-                    }
-                    statusMenuItem("To Read", value: "to-read", icon: "book")
-                    statusMenuItem("To Try", value: "to-try", icon: "hammer")
-                    statusMenuItem("To Share", value: "to-share", icon: "paperplane")
-                    statusMenuItem("Done", value: "done", icon: "checkmark.circle")
-                }
-
-                // Categories section
+                // Categories
                 if !vm.categories.isEmpty {
                     Section("Category") {
                         Button {
@@ -245,7 +240,7 @@ struct LibraryView: View {
                     }
                 }
 
-                // Sort section
+                // Sort
                 Section("Sort") {
                     Button {
                         vm.sortByStars = false
@@ -276,11 +271,10 @@ struct LibraryView: View {
                 if vm.hasActiveFilters {
                     Section {
                         Button(role: .destructive) {
-                            vm.selectedStatus = nil
                             vm.selectedCategory = nil
                             vm.sortByStars = false
                         } label: {
-                            Label("Clear All Filters", systemImage: "xmark.circle")
+                            Label("Clear Filters", systemImage: "xmark.circle")
                         }
                     }
                 }
@@ -294,13 +288,6 @@ struct LibraryView: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
             Button {
-                Task { await vm.refresh() }
-            } label: {
-                Image(systemName: "arrow.clockwise")
-            }
-        }
-        ToolbarItem(placement: .topBarTrailing) {
-            Button {
                 withAnimation(.spring(duration: 0.3)) {
                     viewMode = viewMode == "cards" ? "list" : "cards"
                 }
@@ -308,17 +295,9 @@ struct LibraryView: View {
                 Image(systemName: viewMode == "cards" ? "list.bullet" : "square.grid.2x2")
             }
         }
-        // Sign out moved to Profile tab
-    }
-
-    func statusMenuItem(_ label: String, value: String, icon: String) -> some View {
-        Button {
-            vm.selectedStatus = vm.selectedStatus == value ? nil : value
-        } label: {
-            Label {
-                Text(label)
-            } icon: {
-                Image(systemName: vm.selectedStatus == value ? "checkmark" : icon)
+        ToolbarItem(placement: .topBarTrailing) {
+            Button { showProfile = true } label: {
+                Image(systemName: "person.circle")
             }
         }
     }
@@ -339,7 +318,7 @@ struct LibraryView: View {
     var emptyView: some View {
         if !vm.searchQuery.isEmpty {
             ContentUnavailableView.search(text: vm.searchQuery)
-        } else if vm.hasActiveFilters {
+        } else if vm.hasActiveFilters || statusFilter != nil {
             ContentUnavailableView(
                 "No Articles",
                 systemImage: "line.3.horizontal.decrease.circle",

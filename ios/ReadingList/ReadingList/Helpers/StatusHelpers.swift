@@ -17,8 +17,7 @@ struct StatusPill: View {
     var label: String {
         switch status {
         case "to-read": return "To Read"
-        case "to-try": return "To Try"
-        case "to-share": return "To Share"
+        case "to-try": return "To Do"
         case "done": return "Done"
         default: return status
         }
@@ -28,7 +27,6 @@ struct StatusPill: View {
         switch status {
         case "to-read": return .blue
         case "to-try": return .orange
-        case "to-share": return .pink
         case "done": return .green
         default: return .secondary
         }

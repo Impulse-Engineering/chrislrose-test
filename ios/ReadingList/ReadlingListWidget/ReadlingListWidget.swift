@@ -21,17 +21,17 @@ struct WidgetLink: Codable {
 struct ReadingEntry: TimelineEntry {
     let date: Date
     let totalCount: Int
-    let unreadCount: Int
     let toReadCount: Int
+    let toDoCount: Int
     let doneCount: Int
-    let recentTitles: [String]  // Last 3 article titles
+    let recentTitles: [String]
 }
 
 // MARK: - Provider
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> ReadingEntry {
-        ReadingEntry(date: .now, totalCount: 24, unreadCount: 12, toReadCount: 8, doneCount: 6, recentTitles: ["Loading...", "Loading...", "Loading..."])
+        ReadingEntry(date: .now, totalCount: 24, toReadCount: 12, toDoCount: 6, doneCount: 6, recentTitles: ["Loading...", "Loading...", "Loading..."])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (ReadingEntry) -> ()) {
@@ -52,7 +52,7 @@ struct Provider: TimelineProvider {
         let anonKey = "sb_publishable_RPJSQlVO4isbKnZve8NlWg_55EO350Y"
 
         guard var comps = URLComponents(string: "\(baseURL)/rest/v1/links") else {
-            return ReadingEntry(date: .now, totalCount: 0, unreadCount: 0, toReadCount: 0, doneCount: 0, recentTitles: [])
+            return ReadingEntry(date: .now, totalCount: 0, toReadCount: 0, toDoCount: 0, doneCount: 0, recentTitles: [])
         }
 
         comps.queryItems = [
@@ -62,7 +62,7 @@ struct Provider: TimelineProvider {
         ]
 
         guard let url = comps.url else {
-            return ReadingEntry(date: .now, totalCount: 0, unreadCount: 0, toReadCount: 0, doneCount: 0, recentTitles: [])
+            return ReadingEntry(date: .now, totalCount: 0, toReadCount: 0, toDoCount: 0, doneCount: 0, recentTitles: [])
         }
 
         var req = URLRequest(url: url)
@@ -90,14 +90,14 @@ struct Provider: TimelineProvider {
 
             let links = try decoder.decode([WidgetLink].self, from: data)
             let total = links.count
-            let unread = links.filter { $0.status != "done" }.count
             let toRead = links.filter { $0.status == "to-read" }.count
+            let toDo = links.filter { $0.status == "to-try" }.count
             let done = links.filter { $0.status == "done" }.count
             let recent = Array(links.prefix(3).compactMap(\.title))
 
-            return ReadingEntry(date: .now, totalCount: total, unreadCount: unread, toReadCount: toRead, doneCount: done, recentTitles: recent)
+            return ReadingEntry(date: .now, totalCount: total, toReadCount: toRead, toDoCount: toDo, doneCount: done, recentTitles: recent)
         } catch {
-            return ReadingEntry(date: .now, totalCount: 0, unreadCount: 0, toReadCount: 0, doneCount: 0, recentTitles: [])
+            return ReadingEntry(date: .now, totalCount: 0, toReadCount: 0, toDoCount: 0, doneCount: 0, recentTitles: [])
         }
     }
 }
@@ -120,7 +120,7 @@ struct ReadlingListWidgetEntryView: View {
     }
 
     var smallWidget: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Image(systemName: "books.vertical.fill")
                     .foregroundStyle(.indigo)
@@ -130,23 +130,25 @@ struct ReadlingListWidgetEntryView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text("\(entry.unreadCount)")
-                .font(.system(size: 36, weight: .bold, design: .rounded))
+            Spacer()
 
-            Text("unread")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 4) {
+                Label("\(entry.toReadCount) to read", systemImage: "book")
+                    .font(.caption)
+                    .foregroundStyle(.blue)
+                Label("\(entry.toDoCount) to do", systemImage: "hammer")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                Label("\(entry.doneCount) done", systemImage: "checkmark.circle")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+            }
 
             Spacer()
 
-            HStack(spacing: 12) {
-                Label("\(entry.toReadCount)", systemImage: "book")
-                    .font(.caption2)
-                    .foregroundStyle(.blue)
-                Label("\(entry.doneCount)", systemImage: "checkmark")
-                    .font(.caption2)
-                    .foregroundStyle(.green)
-            }
+            Text("\(entry.totalCount) total")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -164,18 +166,14 @@ struct ReadlingListWidgetEntryView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Text("\(entry.unreadCount) unread")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                Spacer()
 
-                HStack(spacing: 10) {
-                    Label("\(entry.toReadCount) to read", systemImage: "book")
-                        .font(.caption)
-                        .foregroundStyle(.blue)
-                    Label("\(entry.doneCount) done", systemImage: "checkmark")
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                }
+                Label("\(entry.toReadCount) to read", systemImage: "book")
+                    .font(.caption).foregroundStyle(.blue)
+                Label("\(entry.toDoCount) to do", systemImage: "hammer")
+                    .font(.caption).foregroundStyle(.orange)
+                Label("\(entry.doneCount) done", systemImage: "checkmark.circle")
+                    .font(.caption).foregroundStyle(.green)
 
                 Spacer()
 
@@ -230,11 +228,11 @@ struct ReadlingListWidget: Widget {
 #Preview(as: .systemSmall) {
     ReadlingListWidget()
 } timeline: {
-    ReadingEntry(date: .now, totalCount: 24, unreadCount: 12, toReadCount: 8, doneCount: 6, recentTitles: ["The Case for AI", "SwiftUI Tips", "Design Systems"])
+    ReadingEntry(date: .now, totalCount: 24, toReadCount: 12, toDoCount: 6, doneCount: 6, recentTitles: ["The Case for AI", "SwiftUI Tips", "Design Systems"])
 }
 
 #Preview(as: .systemMedium) {
     ReadlingListWidget()
 } timeline: {
-    ReadingEntry(date: .now, totalCount: 24, unreadCount: 12, toReadCount: 8, doneCount: 6, recentTitles: ["The Case for AI", "SwiftUI Tips", "Design Systems"])
+    ReadingEntry(date: .now, totalCount: 24, toReadCount: 12, toDoCount: 6, doneCount: 6, recentTitles: ["The Case for AI", "SwiftUI Tips", "Design Systems"])
 }

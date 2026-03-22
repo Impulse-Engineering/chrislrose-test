@@ -6,14 +6,65 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9A53C9242F705B9900E9CD72 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A53C9232F705B9900E9CD72 /* WidgetKit.framework */; };
+		9A53C9262F705B9900E9CD72 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A53C9252F705B9900E9CD72 /* SwiftUI.framework */; };
+		9A53C9312F705B9A00E9CD72 /* ReadlingListWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9A53C9212F705B9900E9CD72 /* ReadlingListWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9A53C92F2F705B9A00E9CD72 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9A2A56492F6F938F00FFB56C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9A53C9202F705B9900E9CD72;
+			remoteInfo = ReadlingListWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9A53C9362F705B9A00E9CD72 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9A53C9312F705B9A00E9CD72 /* ReadlingListWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		9A2A56512F6F938F00FFB56C /* ReadingList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReadingList.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9A53C9212F705B9900E9CD72 /* ReadlingListWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ReadlingListWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9A53C9232F705B9900E9CD72 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		9A53C9252F705B9900E9CD72 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9A53C9322F705B9A00E9CD72 /* Exceptions for "ReadlingListWidget" folder in "ReadlingListWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9A53C9202F705B9900E9CD72 /* ReadlingListWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9A2A56532F6F938F00FFB56C /* ReadingList */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = ReadingList;
+			sourceTree = "<group>";
+		};
+		9A53C9272F705B9900E9CD72 /* ReadlingListWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9A53C9322F705B9A00E9CD72 /* Exceptions for "ReadlingListWidget" folder in "ReadlingListWidgetExtension" target */,
+			);
+			path = ReadlingListWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -26,6 +77,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9A53C91E2F705B9900E9CD72 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A53C9262F705B9900E9CD72 /* SwiftUI.framework in Frameworks */,
+				9A53C9242F705B9900E9CD72 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -33,6 +93,8 @@
 			isa = PBXGroup;
 			children = (
 				9A2A56532F6F938F00FFB56C /* ReadingList */,
+				9A53C9272F705B9900E9CD72 /* ReadlingListWidget */,
+				9A53C9222F705B9900E9CD72 /* Frameworks */,
 				9A2A56522F6F938F00FFB56C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,8 +103,18 @@
 			isa = PBXGroup;
 			children = (
 				9A2A56512F6F938F00FFB56C /* ReadingList.app */,
+				9A53C9212F705B9900E9CD72 /* ReadlingListWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		9A53C9222F705B9900E9CD72 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9A53C9232F705B9900E9CD72 /* WidgetKit.framework */,
+				9A53C9252F705B9900E9CD72 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -55,10 +127,12 @@
 				9A2A564D2F6F938F00FFB56C /* Sources */,
 				9A2A564E2F6F938F00FFB56C /* Frameworks */,
 				9A2A564F2F6F938F00FFB56C /* Resources */,
+				9A53C9362F705B9A00E9CD72 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				9A53C9302F705B9A00E9CD72 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				9A2A56532F6F938F00FFB56C /* ReadingList */,
@@ -69,6 +143,28 @@
 			productName = ReadingList;
 			productReference = 9A2A56512F6F938F00FFB56C /* ReadingList.app */;
 			productType = "com.apple.product-type.application";
+		};
+		9A53C9202F705B9900E9CD72 /* ReadlingListWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9A53C9332F705B9A00E9CD72 /* Build configuration list for PBXNativeTarget "ReadlingListWidgetExtension" */;
+			buildPhases = (
+				9A53C91D2F705B9900E9CD72 /* Sources */,
+				9A53C91E2F705B9900E9CD72 /* Frameworks */,
+				9A53C91F2F705B9900E9CD72 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9A53C9272F705B9900E9CD72 /* ReadlingListWidget */,
+			);
+			name = ReadlingListWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = ReadlingListWidgetExtension;
+			productReference = 9A53C9212F705B9900E9CD72 /* ReadlingListWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -81,6 +177,9 @@
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					9A2A56502F6F938F00FFB56C = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					9A53C9202F705B9900E9CD72 = {
 						CreatedOnToolsVersion = 26.3;
 					};
 				};
@@ -100,12 +199,20 @@
 			projectRoot = "";
 			targets = (
 				9A2A56502F6F938F00FFB56C /* ReadingList */,
+				9A53C9202F705B9900E9CD72 /* ReadlingListWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		9A2A564F2F6F938F00FFB56C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A53C91F2F705B9900E9CD72 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +229,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9A53C91D2F705B9900E9CD72 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9A53C9302F705B9A00E9CD72 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9A53C9202F705B9900E9CD72 /* ReadlingListWidgetExtension */;
+			targetProxy = 9A53C92F2F705B9A00E9CD72 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		9A2A565A2F6F939000FFB56C /* Debug */ = {
@@ -310,6 +432,66 @@
 			};
 			name = Release;
 		};
+		9A53C9342F705B9A00E9CD72 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TS7DPN2457;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ReadlingListWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ReadlingListWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chrislrose.ReadingList.ReadlingListWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9A53C9352F705B9A00E9CD72 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TS7DPN2457;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ReadlingListWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ReadlingListWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chrislrose.ReadingList.ReadlingListWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -327,6 +509,15 @@
 			buildConfigurations = (
 				9A2A565D2F6F939000FFB56C /* Debug */,
 				9A2A565E2F6F939000FFB56C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9A53C9332F705B9A00E9CD72 /* Build configuration list for PBXNativeTarget "ReadlingListWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A53C9342F705B9A00E9CD72 /* Debug */,
+				9A53C9352F705B9A00E9CD72 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

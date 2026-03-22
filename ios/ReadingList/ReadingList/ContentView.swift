@@ -21,18 +21,23 @@ struct ContentView: View {
     var tabs: some View {
         TabView {
             Tab("Library", systemImage: "books.vertical") {
-                LibraryView()
+                LibraryView(statusFilter: nil)
+                    .environment(libraryVM)
+                    .environment(authVM)
+            }
+            Tab("Read", systemImage: "book") {
+                LibraryView(statusFilter: "to-read")
+                    .environment(libraryVM)
+                    .environment(authVM)
+            }
+            Tab("Do", systemImage: "hammer") {
+                LibraryView(statusFilter: "to-try")
                     .environment(libraryVM)
                     .environment(authVM)
             }
             Tab("Search", systemImage: "magnifyingglass", role: .search) {
                 SearchView()
                     .environment(libraryVM)
-            }
-            Tab("Profile", systemImage: "person.circle") {
-                ProfileView()
-                    .environment(libraryVM)
-                    .environment(authVM)
             }
         }
     }

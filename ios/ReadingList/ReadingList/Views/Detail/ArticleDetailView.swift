@@ -266,7 +266,6 @@ struct ArticleDetailView: View {
             HStack(spacing: 8) {
                 statusButton("to-read")
                 statusButton("to-try")
-                statusButton("to-share")
                 statusButton("done")
             }
         }
