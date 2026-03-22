@@ -16,8 +16,10 @@ struct ArticleDetailView: View {
         self._editedNote = State(initialValue: link.note ?? "")
     }
 
+    @State private var showEnrich = false
+
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack {
             // Full-screen blurred background
             backgroundLayer.ignoresSafeArea()
 
@@ -31,6 +33,7 @@ struct ArticleDetailView: View {
                     VStack(spacing: 10) {
                         titleCard
                         readButton
+                        enrichButton
                         ratingAndStatusCard
                         noteCard
                         if currentLink.category != nil || hasTagContent {
@@ -41,8 +44,9 @@ struct ArticleDetailView: View {
                     .padding(.bottom, 60)
                 }
             }
-
-            // Floating close + share buttons
+        }
+        // Floating close + share buttons — overlay so they don't shift content
+        .overlay(alignment: .topTrailing) {
             HStack(spacing: 12) {
                 navButton(icon: "square.and.arrow.up") { shareArticle() }
                 navButton(icon: "xmark") { dismiss() }
@@ -52,6 +56,12 @@ struct ArticleDetailView: View {
         }
         .sheet(isPresented: $showReader) {
             WebReaderView(url: currentLink.url, title: currentLink.title ?? currentLink.url)
+        }
+        .sheet(isPresented: $showEnrich) {
+            EnrichSheetView(link: currentLink) { updatedLink in
+                currentLink = updatedLink
+            }
+            .environment(vm)
         }
     }
 
@@ -173,6 +183,26 @@ struct ArticleDetailView: View {
             .padding(.vertical, 16)
             .foregroundStyle(.white)
             .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+    }
+
+    // MARK: - Enrich Button
+
+    var enrichButton: some View {
+        Button { showEnrich = true } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles")
+                Text("Enrich with AI").fontWeight(.semibold)
+            }
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .foregroundStyle(.white)
+            .background(
+                LinearGradient(colors: [Color.purple, Color.indigo],
+                               startPoint: .leading, endPoint: .trailing),
+                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
         }
     }
 
@@ -330,10 +360,17 @@ struct ArticleDetailView: View {
 
 extension View {
     func materialCard() -> some View {
-        self.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        self
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color(white: 0.14).opacity(0.92))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
+                    )
+            )
     }
 
-    // Keep glassCard for backwards compatibility
     func glassCard() -> some View { materialCard() }
 }
 

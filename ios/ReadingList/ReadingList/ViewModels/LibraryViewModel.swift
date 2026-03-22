@@ -102,6 +102,25 @@ final class LibraryViewModel {
         }
     }
 
+    func updateEnrich(link: Link, fields: [String: Any]) async {
+        guard !fields.isEmpty else { return }
+        do {
+            try await SupabaseClient.shared.updateLink(id: link.id, fields: fields)
+            if let idx = allLinks.firstIndex(where: { $0.id == link.id }) {
+                if let t = fields["title"] as? String { allLinks[idx].title = t }
+                if let n = fields["note"] as? String { allLinks[idx].note = n.isEmpty ? nil : n }
+                if let ta = fields["tags"] as? String { allLinks[idx].tags = ta.isEmpty ? nil : ta }
+                if let c = fields["category"] as? String { allLinks[idx].category = c.isEmpty ? nil : c }
+                if let s = fields["status"] as? String {
+                    allLinks[idx].status = s
+                    allLinks[idx].read = (s == "done")
+                }
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func delete(link: Link) async {
         do {
             try await SupabaseClient.shared.deleteLink(id: link.id)
