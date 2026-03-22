@@ -1,4 +1,5 @@
 import SwiftUI
+import SafariServices
 
 /// Full-screen immersive reader with swipe navigation between articles.
 struct ArticleReaderContainer: View {
@@ -37,7 +38,7 @@ struct ArticleReaderContainer: View {
                 .gesture(swipeGesture)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    // Leading: back/close button
+                    // Leading: close
                     ToolbarItem(placement: .topBarLeading) {
                         Button { dismiss() } label: {
                             Image(systemName: "chevron.left")
@@ -45,13 +46,8 @@ struct ArticleReaderContainer: View {
                         }
                     }
 
-                    // Trailing: action buttons
+                    // Trailing: reader toggle, info, overflow
                     ToolbarItemGroup(placement: .topBarTrailing) {
-                        // Typography (Aa)
-                        Button { showTypography = true } label: {
-                            Image(systemName: "textformat.size")
-                        }
-
                         // Reader/Web toggle
                         Button {
                             withAnimation(.spring(duration: 0.3)) { isReaderMode.toggle() }
@@ -59,15 +55,18 @@ struct ArticleReaderContainer: View {
                             Image(systemName: isReaderMode ? "globe" : "doc.text")
                         }
 
-                        // Share
-                        Button { shareArticle() } label: {
-                            Image(systemName: "square.and.arrow.up")
+                        // Article info (promoted from overflow)
+                        Button { showInfo = true } label: {
+                            Image(systemName: "info.circle")
                         }
 
-                        // Overflow: info, safari, copy
+                        // Overflow: everything else
                         Menu {
-                            Button { showInfo = true } label: {
-                                Label("Article Info", systemImage: "info.circle")
+                            Button { shareArticle() } label: {
+                                Label("Share", systemImage: "square.and.arrow.up")
+                            }
+                            Button { showTypography = true } label: {
+                                Label("Typography", systemImage: "textformat.size")
                             }
                             Button {
                                 guard let url = URL(string: currentLink.url) else { return }
@@ -113,9 +112,10 @@ struct ArticleReaderContainer: View {
                 .id(currentLink.id + "reader")
                 .ignoresSafeArea(edges: .bottom)
             } else {
-                WebView(url: webURL)
+                // SFSafariViewController gets the user's content blockers (ad blockers)
+                SafariWebView(url: webURL)
                     .id(currentLink.id + "web")
-                    .ignoresSafeArea(edges: .bottom)
+                    .ignoresSafeArea()
             }
         } else {
             ContentUnavailableView("Invalid URL", systemImage: "link.badge.plus")
@@ -146,7 +146,31 @@ struct ArticleReaderContainer: View {
         let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let root = scene.windows.first?.rootViewController {
-            root.present(av, animated: true)
+            // Find the topmost presented controller
+            var topController = root
+            while let presented = topController.presentedViewController {
+                topController = presented
+            }
+            topController.present(av, animated: true)
         }
     }
+}
+
+// MARK: - SFSafariViewController wrapper (gets user's content blockers)
+
+struct SafariWebView: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let config = SFSafariViewController.Configuration()
+        config.entersReaderIfAvailable = false
+        let vc = SFSafariViewController(url: url, configuration: config)
+        vc.preferredBarTintColor = .black
+        vc.preferredControlTintColor = .white
+        // Hide Safari's own toolbar since we have our own nav bar
+        vc.dismissButtonStyle = .done
+        return vc
+    }
+
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
 }
