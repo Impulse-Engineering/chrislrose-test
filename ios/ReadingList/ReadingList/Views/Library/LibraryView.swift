@@ -6,7 +6,7 @@ struct LibraryView: View {
 
     @State private var selectedLink: Link? = nil
     @State private var appeared = false
-    // Filter is now a Menu popover, no sheet needed
+    @AppStorage("libraryViewMode") private var viewMode: String = "cards"
 
     var body: some View {
         NavigationStack {
@@ -61,26 +61,29 @@ struct LibraryView: View {
 
     var articleList: some View {
         ScrollView {
-            LazyVStack(spacing: 16) {
+            LazyVStack(spacing: viewMode == "cards" ? 16 : 0) {
                 ForEach(Array(vm.filteredLinks.enumerated()), id: \.element.id) { index, link in
-                    ArticleCardView(link: link)
-                        .padding(.horizontal, 16)
-                        .opacity(appeared ? 1 : 0)
-                        .offset(y: appeared ? 0 : 24)
-                        .animation(
-                            .spring(duration: 0.5, bounce: 0.4)
-                            .delay(Double(min(index, 10)) * 0.05),
-                            value: appeared
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture { selectedLink = link }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            trailingSwipeActions(for: link)
+                    Group {
+                        if viewMode == "cards" {
+                            ArticleCardView(link: link)
+                                .padding(.horizontal, 16)
+                        } else {
+                            ArticleRowView(link: link)
+                            if index < vm.filteredLinks.count - 1 {
+                                Divider().padding(.leading, 16)
+                            }
                         }
-                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                            leadingSwipeAction(for: link)
-                        }
-                        .contextMenu { contextMenu(for: link) }
+                    }
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 16)
+                    .animation(
+                        .spring(duration: 0.4, bounce: 0.3)
+                        .delay(Double(min(index, 8)) * 0.04),
+                        value: appeared
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture { selectedLink = link }
+                    .contextMenu { contextMenu(for: link) }
                 }
             }
             .padding(.vertical, 12)
@@ -254,6 +257,15 @@ struct LibraryView: View {
                       : "line.3.horizontal.decrease.circle")
                     .foregroundStyle(vm.hasActiveFilters ? Color.accentColor : Color.primary)
                     .symbolEffect(.bounce, value: vm.hasActiveFilters)
+            }
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                withAnimation(.spring(duration: 0.3)) {
+                    viewMode = viewMode == "cards" ? "list" : "cards"
+                }
+            } label: {
+                Image(systemName: viewMode == "cards" ? "list.bullet" : "square.grid.2x2")
             }
         }
         ToolbarItem(placement: .topBarTrailing) {

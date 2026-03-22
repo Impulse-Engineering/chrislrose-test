@@ -128,11 +128,20 @@ struct WebReaderView: View {
                         .labelStyle(.titleAndIcon)
                     }
                     .tint(isReaderMode ? .secondary : .accentColor)
-                    Button {
-                        guard let webURL = URL(string: url) else { return }
-                        UIApplication.shared.open(webURL)
+                    Menu {
+                        Button {
+                            guard let webURL = URL(string: url) else { return }
+                            UIApplication.shared.open(webURL)
+                        } label: {
+                            Label("Open in Safari", systemImage: "safari")
+                        }
+                        Button {
+                            UIPasteboard.general.string = url
+                        } label: {
+                            Label("Copy URL", systemImage: "doc.on.doc")
+                        }
                     } label: {
-                        Image(systemName: "safari")
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }
