@@ -8,6 +8,7 @@ struct ArticleDetailView: View {
     @State private var editedNote: String = ""
     @State private var isEditingNote = false
     @State private var showEnrich = false
+    @State private var selectedRelated: Link? = nil
     @State private var currentLink: Link
 
     init(link: Link) {
@@ -108,6 +109,13 @@ struct ArticleDetailView: View {
                 currentLink = updatedLink
             }
             .environment(vm)
+        }
+        .fullScreenCover(item: $selectedRelated) { link in
+            ArticleReaderContainer(
+                links: [link],
+                initialIndex: 0,
+                vm: vm
+            )
         }
     }
 
@@ -401,7 +409,12 @@ struct ArticleDetailView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             ForEach(related) { link in
-                                relatedCard(link: link)
+                                Button {
+                                    selectedRelated = link
+                                } label: {
+                                    relatedCard(link: link)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 16)
