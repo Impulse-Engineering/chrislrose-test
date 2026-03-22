@@ -64,7 +64,7 @@ struct TriageView: View {
                     } label: {
                         Text("Reset skipped")
                             .font(.caption)
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                     }
                 }
             }

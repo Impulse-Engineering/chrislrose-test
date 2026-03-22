@@ -261,6 +261,13 @@ struct LibraryView: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
             Button {
+                Task { await vm.refresh() }
+            } label: {
+                Image(systemName: "arrow.clockwise")
+            }
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
                 withAnimation(.spring(duration: 0.3)) {
                     viewMode = viewMode == "cards" ? "list" : "cards"
                 }
