@@ -1,5 +1,4 @@
 import SwiftUI
-import SafariServices
 
 /// Full-screen immersive reader with swipe navigation between articles.
 struct ArticleReaderContainer: View {
@@ -112,10 +111,9 @@ struct ArticleReaderContainer: View {
                 .id(currentLink.id + "reader")
                 .ignoresSafeArea(edges: .bottom)
             } else {
-                // SFSafariViewController gets the user's content blockers (ad blockers)
-                SafariWebView(url: webURL)
+                WebView(url: webURL)
                     .id(currentLink.id + "web")
-                    .ignoresSafeArea()
+                    .ignoresSafeArea(edges: .bottom)
             }
         } else {
             ContentUnavailableView("Invalid URL", systemImage: "link.badge.plus")
@@ -156,21 +154,3 @@ struct ArticleReaderContainer: View {
     }
 }
 
-// MARK: - SFSafariViewController wrapper (gets user's content blockers)
-
-struct SafariWebView: UIViewControllerRepresentable {
-    let url: URL
-
-    func makeUIViewController(context: Context) -> SFSafariViewController {
-        let config = SFSafariViewController.Configuration()
-        config.entersReaderIfAvailable = false
-        let vc = SFSafariViewController(url: url, configuration: config)
-        vc.preferredBarTintColor = .black
-        vc.preferredControlTintColor = .white
-        // Hide Safari's own toolbar since we have our own nav bar
-        vc.dismissButtonStyle = .done
-        return vc
-    }
-
-    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
-}
