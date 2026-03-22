@@ -3,7 +3,8 @@ import WebKit
 
 // MARK: - Reader Theme & Font
 
-enum ReaderTheme: String, CaseIterable {
+enum ReaderTheme: String, CaseIterable, Identifiable {
+    var id: String { rawValue }
     case dark, light, sepia
 
     var label: String {
@@ -39,7 +40,8 @@ enum ReaderTheme: String, CaseIterable {
     }
 }
 
-enum ReaderFont: String, CaseIterable {
+enum ReaderFont: String, CaseIterable, Identifiable {
+    var id: String { rawValue }
     case system, serif, mono
 
     var label: String {
@@ -168,7 +170,7 @@ struct TypographySheet: View {
                 }
 
                 Section("Font") {
-                    ForEach(ReaderFont.allCases, id: \.rawValue) { f in
+                    ForEach(ReaderFont.allCases) { f in
                         Button {
                             fontRaw = f.rawValue
                         } label: {
@@ -188,7 +190,7 @@ struct TypographySheet: View {
                 }
 
                 Section("Theme") {
-                    ForEach(ReaderTheme.allCases, id: \.rawValue) { t in
+                    ForEach(ReaderTheme.allCases) { t in
                         Button {
                             themeRaw = t.rawValue
                         } label: {
