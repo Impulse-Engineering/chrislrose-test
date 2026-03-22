@@ -20,26 +20,26 @@ struct WidgetLink: Codable {
 
 struct ReadingEntry: TimelineEntry {
     let date: Date
-    let recentArticles: [RecentArticle]
-    let totalCount: Int
+    let articles: [WidgetArticle]
 }
 
-struct RecentArticle: Identifiable {
+struct WidgetArticle: Identifiable {
     let id = UUID()
     let title: String
     let domain: String
     let timeAgo: String
-    let statusColor: Color?
+    let imageURL: URL?
+    let statusLabel: String?
 }
 
 // MARK: - Provider
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> ReadingEntry {
-        ReadingEntry(date: .now, recentArticles: [
-            RecentArticle(title: "Loading...", domain: "example.com", timeAgo: "now", statusColor: .blue),
-            RecentArticle(title: "Loading...", domain: "example.com", timeAgo: "1h", statusColor: nil),
-        ], totalCount: 12)
+        ReadingEntry(date: .now, articles: [
+            WidgetArticle(title: "Loading your articles...", domain: "procrastinate", timeAgo: "now", imageURL: nil, statusLabel: "To Read"),
+            WidgetArticle(title: "Pull to refresh in the app", domain: "procrastinate", timeAgo: "now", imageURL: nil, statusLabel: nil),
+        ])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (ReadingEntry) -> ()) {
@@ -60,18 +60,18 @@ struct Provider: TimelineProvider {
         let anonKey = "sb_publishable_RPJSQlVO4isbKnZve8NlWg_55EO350Y"
 
         guard var comps = URLComponents(string: "\(baseURL)/rest/v1/links") else {
-            return ReadingEntry(date: .now, recentArticles: [], totalCount: 0)
+            return ReadingEntry(date: .now, articles: [])
         }
 
         comps.queryItems = [
-            URLQueryItem(name: "select", value: "title,domain,status,saved_at"),
+            URLQueryItem(name: "select", value: "title,domain,status,image,saved_at"),
             URLQueryItem(name: "order", value: "saved_at.desc"),
-            URLQueryItem(name: "limit", value: "5"),
+            URLQueryItem(name: "limit", value: "3"),
             URLQueryItem(name: "private", value: "eq.false")
         ]
 
         guard let url = comps.url else {
-            return ReadingEntry(date: .now, recentArticles: [], totalCount: 0)
+            return ReadingEntry(date: .now, articles: [])
         }
 
         var req = URLRequest(url: url)
@@ -79,8 +79,6 @@ struct Provider: TimelineProvider {
         if let token = UserDefaults.standard.string(forKey: "supabase_access_token") {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
-        // Get total count via a second lightweight request
-        req.setValue("true", forHTTPHeaderField: "Prefer")
 
         do {
             let (data, _) = try await URLSession.shared.data(for: req)
@@ -99,167 +97,153 @@ struct Provider: TimelineProvider {
 
             let links = try decoder.decode([WidgetLink].self, from: data)
             let articles = links.map { link in
-                RecentArticle(
+                WidgetArticle(
                     title: link.title ?? "Untitled",
                     domain: link.domain ?? "",
                     timeAgo: timeAgo(from: link.savedAt),
-                    statusColor: statusColor(for: link.status)
+                    imageURL: link.image.flatMap { URL(string: $0) },
+                    statusLabel: statusLabel(for: link.status)
                 )
             }
-            return ReadingEntry(date: .now, recentArticles: articles, totalCount: links.count)
+            return ReadingEntry(date: .now, articles: articles)
         } catch {
-            return ReadingEntry(date: .now, recentArticles: [], totalCount: 0)
+            return ReadingEntry(date: .now, articles: [])
         }
     }
 
     func timeAgo(from date: Date?) -> String {
         guard let date else { return "" }
         let interval = Date().timeIntervalSince(date)
-        if interval < 60 { return "now" }
-        if interval < 3600 { return "\(Int(interval / 60))m" }
-        if interval < 86400 { return "\(Int(interval / 3600))h" }
-        if interval < 604800 { return "\(Int(interval / 86400))d" }
-        return "\(Int(interval / 604800))w"
+        if interval < 60 { return "just now" }
+        if interval < 3600 { return "\(Int(interval / 60))m ago" }
+        if interval < 86400 { return "\(Int(interval / 3600))h ago" }
+        if interval < 604800 { return "\(Int(interval / 86400))d ago" }
+        return "\(Int(interval / 604800))w ago"
     }
 
-    func statusColor(for status: String?) -> Color? {
+    func statusLabel(for status: String?) -> String? {
         switch status {
-        case "to-read": return .blue
-        case "to-try": return .orange
-        case "done": return .green
+        case "to-read": return "To Read"
+        case "to-try": return "To Do"
+        case "done": return "Done"
         default: return nil
         }
     }
 }
 
-// MARK: - Widget Views
+// MARK: - Widget View
 
 struct ReadlingListWidgetEntryView: View {
     var entry: ReadingEntry
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        switch family {
-        case .systemSmall:
-            smallWidget
-        case .systemMedium:
-            mediumWidget
-        default:
-            smallWidget
-        }
-    }
-
-    // MARK: - Small: Last 2 saves
-
-    var smallWidget: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color(red: 0.31, green: 0.27, blue: 0.90), Color(red: 0.20, green: 0.16, blue: 0.70)],
-                startPoint: .topLeading, endPoint: .bottomTrailing
-            )
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "books.vertical.fill")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.6))
-                    Text("RECENT")
-                        .font(.caption2)
-                        .fontWeight(.heavy)
-                        .foregroundStyle(.white.opacity(0.5))
-                        .tracking(1)
-                    Spacer()
-                }
-
+        VStack(alignment: .leading, spacing: 0) {
+            // Header: "Procrastinate Next" + app icon
+            HStack {
+                Text("Procrastinate Next")
+                    .font(.system(size: family == .systemSmall ? 15 : 20, weight: .bold))
+                    .foregroundStyle(.primary)
                 Spacer()
-
-                ForEach(entry.recentArticles.prefix(2)) { article in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(article.title)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.white)
-                            .lineLimit(2)
-                        HStack(spacing: 4) {
-                            if let color = article.statusColor {
-                                Circle().fill(color).frame(width: 6, height: 6)
-                            }
-                            Text(article.domain)
-                                .font(.caption2)
-                                .foregroundStyle(.white.opacity(0.5))
-                            Text("·").foregroundStyle(.white.opacity(0.3))
-                            Text(article.timeAgo)
-                                .font(.caption2)
-                                .foregroundStyle(.white.opacity(0.4))
-                        }
-                    }
-                }
-
-                Spacer(minLength: 0)
+                Image(systemName: "books.vertical.fill")
+                    .font(.system(size: family == .systemSmall ? 16 : 22))
+                    .foregroundStyle(.indigo)
             }
-            .padding(2)
+            .padding(.bottom, family == .systemSmall ? 8 : 12)
+
+            // Article rows
+            let count = family == .systemSmall ? 1 : 2
+            ForEach(Array(entry.articles.prefix(count).enumerated()), id: \.element.id) { index, article in
+                articleRow(article)
+                if index < count - 1 && index < entry.articles.count - 1 {
+                    Spacer(minLength: 8)
+                }
+            }
+
+            Spacer(minLength: 0)
         }
     }
 
-    // MARK: - Medium: Last 3 saves with more detail
-
-    var mediumWidget: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color(red: 0.31, green: 0.27, blue: 0.90), Color(red: 0.20, green: 0.16, blue: 0.70)],
-                startPoint: .topLeading, endPoint: .bottomTrailing
-            )
-
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Image(systemName: "books.vertical.fill")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.6))
-                    Text("RECENTLY SAVED")
-                        .font(.caption2)
-                        .fontWeight(.heavy)
-                        .foregroundStyle(.white.opacity(0.5))
-                        .tracking(1)
-                    Spacer()
-                }
-
-                Spacer(minLength: 6)
-
-                ForEach(entry.recentArticles.prefix(3)) { article in
-                    HStack(spacing: 10) {
-                        // Status dot
-                        if let color = article.statusColor {
-                            Circle().fill(color).frame(width: 8, height: 8)
-                        } else {
-                            Circle().fill(.white.opacity(0.2)).frame(width: 8, height: 8)
+    func articleRow(_ article: WidgetArticle) -> some View {
+        HStack(spacing: 12) {
+            // Square thumbnail
+            Group {
+                if let imageURL = article.imageURL {
+                    // WidgetKit doesn't support AsyncImage — use placeholder
+                    // The image will show after WidgetKit caches it
+                    Color(.systemGray4)
+                        .overlay {
+                            NetworkImage(url: imageURL)
                         }
-
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(article.title)
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-                            Text("\(article.domain) · \(article.timeAgo)")
-                                .font(.caption2)
-                                .foregroundStyle(.white.opacity(0.45))
+                        .clipped()
+                } else {
+                    ZStack {
+                        LinearGradient(
+                            colors: [.indigo.opacity(0.6), .indigo.opacity(0.3)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                        if let first = article.domain.first {
+                            Text(String(first).uppercased())
+                                .font(.system(size: 20, weight: .black, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.5))
                         }
-
-                        Spacer()
-                    }
-                    .padding(.vertical, 4)
-
-                    if article.id != entry.recentArticles.prefix(3).last?.id {
-                        Rectangle()
-                            .fill(.white.opacity(0.08))
-                            .frame(height: 1)
-                            .padding(.leading, 18)
                     }
                 }
-
-                Spacer(minLength: 0)
             }
-            .padding(2)
+            .frame(width: family == .systemSmall ? 48 : 64, height: family == .systemSmall ? 48 : 64)
+            .clipShape(RoundedRectangle(cornerRadius: family == .systemSmall ? 8 : 10, style: .continuous))
+
+            // Text
+            VStack(alignment: .leading, spacing: 2) {
+                Text(article.title)
+                    .font(.system(size: family == .systemSmall ? 12 : 14, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+
+                HStack(spacing: 4) {
+                    if let status = article.statusLabel {
+                        Text(status)
+                            .foregroundStyle(.secondary)
+                    }
+                    if article.statusLabel != nil {
+                        Text("·").foregroundStyle(.tertiary)
+                    }
+                    Text(article.domain)
+                        .foregroundStyle(.tertiary)
+                    Text("·").foregroundStyle(.tertiary)
+                    Text(article.timeAgo)
+                        .foregroundStyle(.tertiary)
+                }
+                .font(.system(size: family == .systemSmall ? 10 : 12))
+                .lineLimit(1)
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+// MARK: - Network Image for Widgets
+
+struct NetworkImage: View {
+    let url: URL
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                Color.clear
+            }
+        }
+        .task {
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                self.image = UIImage(data: data)
+            } catch {}
         }
     }
 }
@@ -271,30 +255,33 @@ struct ReadlingListWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
-            ReadlingListWidgetEntryView(entry: entry)
-                .containerBackground(.clear, for: .widget)
+            if #available(iOS 26, *) {
+                ReadlingListWidgetEntryView(entry: entry)
+                    .containerBackground(.regularMaterial, for: .widget)
+            } else {
+                ReadlingListWidgetEntryView(entry: entry)
+                    .containerBackground(.regularMaterial, for: .widget)
+            }
         }
-        .configurationDisplayName("Procrastinate")
+        .configurationDisplayName("Procrastinate Next")
         .description("Your recently saved articles.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 
-#Preview(as: .systemSmall) {
-    ReadlingListWidget()
-} timeline: {
-    ReadingEntry(date: .now, recentArticles: [
-        RecentArticle(title: "The Case for an Ultralight Mac", domain: "512pixels.net", timeAgo: "2h", statusColor: .blue),
-        RecentArticle(title: "AI-Washing Layoffs + Why LLMs Can't Write", domain: "podcasts.apple.com", timeAgo: "5h", statusColor: .orange),
-    ], totalCount: 27)
-}
-
 #Preview(as: .systemMedium) {
     ReadlingListWidget()
 } timeline: {
-    ReadingEntry(date: .now, recentArticles: [
-        RecentArticle(title: "The Case for an Ultralight Mac", domain: "512pixels.net", timeAgo: "2h", statusColor: .blue),
-        RecentArticle(title: "AI-Washing Layoffs + Why LLMs Can't Write", domain: "podcasts.apple.com", timeAgo: "5h", statusColor: .orange),
-        RecentArticle(title: "Gemini Task Automation Is Impressive", domain: "theverge.com", timeAgo: "1d", statusColor: nil),
-    ], totalCount: 27)
+    ReadingEntry(date: .now, articles: [
+        WidgetArticle(title: "The Case for an Ultralight Mac That Does Less", domain: "512pixels.net", timeAgo: "2h ago", imageURL: nil, statusLabel: "To Read"),
+        WidgetArticle(title: "AI-Washing Layoffs + Why LLMs Can't Write Well", domain: "podcasts.apple.com", timeAgo: "5h ago", imageURL: nil, statusLabel: "To Do"),
+    ])
+}
+
+#Preview(as: .systemSmall) {
+    ReadlingListWidget()
+} timeline: {
+    ReadingEntry(date: .now, articles: [
+        WidgetArticle(title: "The Case for an Ultralight Mac", domain: "512pixels.net", timeAgo: "2h ago", imageURL: nil, statusLabel: "To Read"),
+    ])
 }
