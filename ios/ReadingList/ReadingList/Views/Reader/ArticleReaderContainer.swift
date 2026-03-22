@@ -11,7 +11,7 @@ struct ArticleReaderContainer: View {
     @State private var currentIndex: Int
     @State private var showInfo = false
     @State private var showTypography = false
-    @State private var isReaderMode = false  // Default to website view
+    @State private var isReaderMode = false
 
     @AppStorage("readerFontSize") private var fontSize: Double = 17
     @AppStorage("readerFont") private var fontRaw: String = "system"
@@ -32,15 +32,62 @@ struct ArticleReaderContainer: View {
     var theme: ReaderTheme { ReaderTheme(rawValue: themeRaw) ?? .dark }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Content — fills available space
+        NavigationStack {
             readerContent
                 .gesture(swipeGesture)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    // Leading: back/close button
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 17, weight: .medium))
+                        }
+                    }
 
-            // Bottom toolbar — always visible, flat, edge-to-edge
-            bottomBar
+                    // Trailing: action buttons
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        // Typography (Aa)
+                        Button { showTypography = true } label: {
+                            Image(systemName: "textformat.size")
+                        }
+
+                        // Reader/Web toggle
+                        Button {
+                            withAnimation(.spring(duration: 0.3)) { isReaderMode.toggle() }
+                        } label: {
+                            Image(systemName: isReaderMode ? "globe" : "doc.text")
+                        }
+
+                        // Share
+                        Button { shareArticle() } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+
+                        // Overflow: info, safari, copy
+                        Menu {
+                            Button { showInfo = true } label: {
+                                Label("Article Info", systemImage: "info.circle")
+                            }
+                            Button {
+                                guard let url = URL(string: currentLink.url) else { return }
+                                UIApplication.shared.open(url)
+                            } label: {
+                                Label("Open in Safari", systemImage: "safari")
+                            }
+                            Button {
+                                UIPasteboard.general.string = currentLink.url
+                            } label: {
+                                Label("Copy URL", systemImage: "doc.on.doc")
+                            }
+                            Divider()
+                            Text("\(currentIndex + 1) of \(links.count)")
+                        } label: {
+                            Image(systemName: "ellipsis")
+                        }
+                    }
+                }
         }
-        .ignoresSafeArea(edges: .top)
         .sheet(isPresented: $showInfo) {
             ArticleDetailView(link: currentLink)
                 .environment(vm)
@@ -64,82 +111,15 @@ struct ArticleReaderContainer: View {
                     onFallback: { withAnimation { isReaderMode = false } }
                 )
                 .id(currentLink.id + "reader")
+                .ignoresSafeArea(edges: .bottom)
             } else {
                 WebView(url: webURL)
                     .id(currentLink.id + "web")
+                    .ignoresSafeArea(edges: .bottom)
             }
         } else {
             ContentUnavailableView("Invalid URL", systemImage: "link.badge.plus")
         }
-    }
-
-    // MARK: - Bottom Bar (flat, edge-to-edge)
-
-    var bottomBar: some View {
-        HStack(spacing: 0) {
-            // Close
-            Button { dismiss() } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .semibold))
-                    .frame(width: 44, height: 44)
-            }
-
-            Spacer()
-
-            // Article counter
-            Text("\(currentIndex + 1) / \(links.count)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            // Reader toggle
-            Button {
-                withAnimation(.spring(duration: 0.3)) { isReaderMode.toggle() }
-            } label: {
-                Image(systemName: isReaderMode ? "globe" : "doc.text")
-                    .font(.system(size: 16))
-                    .frame(width: 44, height: 44)
-            }
-
-            // Typography (only in reader mode)
-            if isReaderMode {
-                Button { showTypography = true } label: {
-                    Image(systemName: "textformat.size")
-                        .font(.system(size: 15))
-                        .frame(width: 44, height: 44)
-                }
-            }
-
-            // Info
-            Button { showInfo = true } label: {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 16))
-                    .frame(width: 44, height: 44)
-            }
-
-            // Overflow
-            Menu {
-                Button {
-                    guard let url = URL(string: currentLink.url) else { return }
-                    UIApplication.shared.open(url)
-                } label: {
-                    Label("Open in Safari", systemImage: "safari")
-                }
-                Button {
-                    UIPasteboard.general.string = currentLink.url
-                } label: {
-                    Label("Copy URL", systemImage: "doc.on.doc")
-                }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 16))
-                    .frame(width: 44, height: 44)
-            }
-        }
-        .foregroundStyle(.primary)
-        .padding(.horizontal, 8)
-        .background(.regularMaterial)
     }
 
     // MARK: - Swipe Gesture
@@ -157,5 +137,16 @@ struct ArticleReaderContainer: View {
                     withAnimation(.spring(duration: 0.3)) { currentIndex -= 1 }
                 }
             }
+    }
+
+    // MARK: - Share
+
+    func shareArticle() {
+        guard let url = URL(string: currentLink.url) else { return }
+        let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = scene.windows.first?.rootViewController {
+            root.present(av, animated: true)
+        }
     }
 }
