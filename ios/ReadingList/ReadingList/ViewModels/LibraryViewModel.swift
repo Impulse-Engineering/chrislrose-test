@@ -161,7 +161,7 @@ final class LibraryViewModel {
                 let result = try await EnrichEngine.enrich(link: link, categories: categoryNames)
                 var fields: [String: Any] = [:]
                 if result.cleanTitle != (link.title ?? "") { fields["title"] = result.cleanTitle }
-                if !result.summary.isEmpty { fields["note"] = result.summary }
+                if !result.summary.isEmpty { fields["summary"] = result.summary }
                 if !result.tags.isEmpty { fields["tags"] = result.tags }
                 if !result.category.isEmpty { fields["category"] = result.category }
                 if !result.status.isEmpty {
