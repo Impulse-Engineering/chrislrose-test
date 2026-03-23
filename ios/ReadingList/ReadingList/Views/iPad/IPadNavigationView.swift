@@ -1,0 +1,311 @@
+import SwiftUI
+
+enum SidebarItem: String, Hashable, CaseIterable {
+    case library = "Library"
+    case read = "Read"
+    case toDo = "Do"
+    case sources = "Sources"
+    case search = "Search"
+    case profile = "Profile"
+
+    var icon: String {
+        switch self {
+        case .library: return "books.vertical"
+        case .read: return "book"
+        case .toDo: return "hammer"
+        case .sources: return "globe"
+        case .search: return "magnifyingglass"
+        case .profile: return "person.circle"
+        }
+    }
+
+    var statusFilter: String? {
+        switch self {
+        case .read: return "to-read"
+        case .toDo: return "to-try"
+        default: return nil
+        }
+    }
+}
+
+struct IPadNavigationView: View {
+    @Environment(LibraryViewModel.self) private var vm
+    @Environment(AuthViewModel.self) private var authVM
+
+    @State private var selectedSidebar: SidebarItem? = .library
+    @State private var selectedLink: Link? = nil
+
+    var body: some View {
+        NavigationSplitView {
+            // Sidebar
+            sidebarContent
+                .navigationTitle("Procrastinate")
+        } content: {
+            // Article list
+            contentColumn
+        } detail: {
+            // Reader
+            detailColumn
+        }
+        .navigationSplitViewStyle(.balanced)
+    }
+
+    // MARK: - Sidebar
+
+    var sidebarContent: some View {
+        List(selection: $selectedSidebar) {
+            Section("Reading") {
+                Label("Library", systemImage: "books.vertical")
+                    .tag(SidebarItem.library)
+                Label("Read", systemImage: "book")
+                    .tag(SidebarItem.read)
+                Label("Do", systemImage: "hammer")
+                    .tag(SidebarItem.toDo)
+            }
+
+            Section("Discover") {
+                Label("Sources", systemImage: "globe")
+                    .tag(SidebarItem.sources)
+                Label("Search", systemImage: "magnifyingglass")
+                    .tag(SidebarItem.search)
+            }
+
+            Section {
+                Label("Profile", systemImage: "person.circle")
+                    .tag(SidebarItem.profile)
+            }
+
+            // Stats at bottom of sidebar
+            Section {
+                HStack(spacing: 16) {
+                    sidebarStat("\(vm.allLinks.filter { $0.status == "to-read" }.count)", label: "Read", color: .blue)
+                    sidebarStat("\(vm.allLinks.filter { $0.status == "to-try" }.count)", label: "Do", color: .orange)
+                    sidebarStat("\(vm.allLinks.filter { $0.status == "done" }.count)", label: "Done", color: .green)
+                }
+                .listRowBackground(Color.clear)
+            }
+        }
+    }
+
+    func sidebarStat(_ value: String, label: String, color: Color) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundStyle(color)
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - Content Column (article list)
+
+    @ViewBuilder
+    var contentColumn: some View {
+        switch selectedSidebar {
+        case .library:
+            IPadArticleList(statusFilter: nil, selectedLink: $selectedLink)
+                .environment(vm)
+                .environment(authVM)
+        case .read:
+            IPadArticleList(statusFilter: "to-read", selectedLink: $selectedLink)
+                .environment(vm)
+                .environment(authVM)
+        case .toDo:
+            IPadArticleList(statusFilter: "to-try", selectedLink: $selectedLink)
+                .environment(vm)
+                .environment(authVM)
+        case .sources:
+            SourcesView()
+                .environment(vm)
+        case .search:
+            SearchView()
+                .environment(vm)
+        case .profile:
+            ProfileView()
+                .environment(vm)
+                .environment(authVM)
+        case .none:
+            ContentUnavailableView("Select a section", systemImage: "sidebar.left", description: Text("Choose from the sidebar"))
+        }
+    }
+
+    // MARK: - Detail Column (reader)
+
+    @ViewBuilder
+    var detailColumn: some View {
+        if let link = selectedLink, let url = URL(string: link.url) {
+            WebView(url: url)
+                .id(link.id)
+                .ignoresSafeArea(edges: .bottom)
+                .navigationTitle(link.title ?? link.domain ?? "Article")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            Haptics.success()
+                            Task { await vm.updateStatus(link: link, status: "done") }
+                        } label: {
+                            Image(systemName: link.status == "done" ? "checkmark.circle.fill" : "checkmark.circle")
+                                .foregroundStyle(link.status == "done" ? .green : .primary)
+                        }
+                    }
+                }
+        } else {
+            ContentUnavailableView("Select an article", systemImage: "doc.text", description: Text("Choose an article to start reading"))
+        }
+    }
+}
+
+// MARK: - iPad Article List (middle column)
+
+struct IPadArticleList: View {
+    let statusFilter: String?
+    @Binding var selectedLink: Link?
+
+    @Environment(LibraryViewModel.self) private var vm
+    @Environment(AuthViewModel.self) private var authVM
+
+    var displayedLinks: [Link] {
+        var result = vm.allLinks
+        if let sf = statusFilter {
+            result = result.filter { $0.status == sf }
+        }
+        if let category = vm.selectedCategory {
+            result = result.filter { $0.category == category }
+        }
+        if vm.sortByStars {
+            result = result.sorted { ($0.stars ?? 0) > ($1.stars ?? 0) }
+        }
+        return result
+    }
+
+    var navTitle: String {
+        switch statusFilter {
+        case "to-read": return "Read"
+        case "to-try": return "Do"
+        default: return "Library"
+        }
+    }
+
+    var body: some View {
+        List(selection: $selectedLink) {
+            ForEach(displayedLinks) { link in
+                iPadRow(link: link)
+                    .tag(link)
+                    .listRowSeparator(.visible)
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button {
+                            Haptics.success()
+                            Task { await vm.updateStatus(link: link, status: link.status == "done" ? nil : "done") }
+                        } label: {
+                            Label(link.status == "done" ? "Undo" : "Done", systemImage: link.status == "done" ? "arrow.uturn.backward" : "checkmark")
+                        }
+                        .tint(.green)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task { await vm.delete(link: link) }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+            }
+        }
+        .listStyle(.sidebar)
+        .navigationTitle(navTitle)
+        .refreshable { await vm.refresh() }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    if !vm.categories.isEmpty {
+                        Menu {
+                            Button { vm.selectedCategory = nil } label: {
+                                Label("All", systemImage: vm.selectedCategory == nil ? "checkmark" : "tray.full")
+                            }
+                            ForEach(vm.categories) { cat in
+                                Button { vm.selectedCategory = cat.name } label: {
+                                    Label {
+                                        Text(cat.name)
+                                    } icon: {
+                                        if vm.selectedCategory == cat.name {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            Label(vm.selectedCategory ?? "Category", systemImage: "folder")
+                        }
+                    }
+                    Section("Sort") {
+                        Button { vm.sortByStars = false } label: {
+                            Label("Newest", systemImage: vm.sortByStars ? "clock" : "checkmark")
+                        }
+                        Button { vm.sortByStars = true } label: {
+                            Label("Top Rated", systemImage: vm.sortByStars ? "checkmark" : "star.fill")
+                        }
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease.circle")
+                }
+            }
+        }
+    }
+
+    func iPadRow(link: Link) -> some View {
+        HStack(spacing: 12) {
+            // Thumbnail
+            if let rawURL = link.image, let imageURL = URL(string: rawURL) {
+                CachedAsyncImage(url: imageURL) { img in
+                    img.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    fallbackThumb(for: link)
+                }
+                .frame(width: 56, height: 56)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            } else {
+                fallbackThumb(for: link)
+                    .frame(width: 56, height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(link.title ?? link.url)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .lineLimit(2)
+
+                HStack(spacing: 6) {
+                    if let domain = link.domain {
+                        Text(domain)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    if let status = link.status {
+                        StatusPill(status: status)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    func fallbackThumb(for link: Link) -> some View {
+        ZStack {
+            LinearGradient(colors: domainGradient(for: link.domain), startPoint: .topLeading, endPoint: .bottomTrailing)
+            if let first = link.domain?.first {
+                Text(String(first).uppercased())
+                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.4))
+            }
+        }
+    }
+}
+
+// Make Link selectable in List
+extension Link: Hashable {
+    static func == (lhs: Link, rhs: Link) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+}

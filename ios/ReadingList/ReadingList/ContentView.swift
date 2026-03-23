@@ -2,17 +2,26 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(AuthViewModel.self) private var authVM
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var libraryVM = ContentView.sharedLibraryVM
 
     static let sharedLibraryVM = LibraryViewModel()
 
     var body: some View {
-        tabView
-            .task { await libraryVM.load() }
+        Group {
+            if sizeClass == .regular {
+                iPadLayout
+            } else {
+                iPhoneLayout
+            }
+        }
+        .task { await libraryVM.load() }
     }
 
+    // MARK: - iPhone (TabView)
+
     @ViewBuilder
-    var tabView: some View {
+    var iPhoneLayout: some View {
         if #available(iOS 26, *) {
             tabs.tabBarMinimizeBehavior(.onScrollDown)
         } else {
@@ -42,5 +51,19 @@ struct ContentView: View {
                     .environment(libraryVM)
             }
         }
+    }
+
+    // MARK: - iPad (NavigationSplitView)
+
+    var iPadLayout: some View {
+        iPadSplitView
+            .environment(libraryVM)
+            .environment(authVM)
+    }
+
+    var iPadSplitView: some View {
+        IPadNavigationView()
+            .environment(libraryVM)
+            .environment(authVM)
     }
 }
