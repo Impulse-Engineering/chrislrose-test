@@ -249,7 +249,7 @@ struct IPadArticleList: View {
                     }
             }
         }
-        .listStyle(.sidebar)
+        .listStyle(.plain)
         .navigationTitle(navTitle)
         .refreshable { await vm.refresh() }
         .sheet(item: $infoLink) { link in
