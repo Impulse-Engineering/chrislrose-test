@@ -344,8 +344,19 @@ struct IPadArticleList: View {
     }
 }
 
-// Make Link selectable in List
+// Make Link selectable in List — must compare ALL fields so SwiftUI
+// detects changes (not just id, or status/star updates won't re-render)
 extension Link: Hashable {
-    static func == (lhs: Link, rhs: Link) -> Bool { lhs.id == rhs.id }
+    static func == (lhs: Link, rhs: Link) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.status == rhs.status &&
+        lhs.stars == rhs.stars &&
+        lhs.note == rhs.note &&
+        lhs.summary == rhs.summary &&
+        lhs.tags == rhs.tags &&
+        lhs.category == rhs.category &&
+        lhs.title == rhs.title &&
+        lhs.read == rhs.read
+    }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
