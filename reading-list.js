@@ -13,8 +13,6 @@
   var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
   var MICROLINK    = 'https://api.microlink.io?url=';
-  var IMG_PROXY    = 'https://chrislrose.aseva.ai/proxy.php?url=';
-
   // Domains whose CDN images require a server-side proxy to bypass hotlink protection
   var PROXY_DOMAINS = ['cdninstagram.com', 'fbcdn.net'];
 
@@ -24,7 +22,9 @@
       var host = new URL(url).hostname;
       for (var i = 0; i < PROXY_DOMAINS.length; i++) {
         if (host === PROXY_DOMAINS[i] || host.endsWith('.' + PROXY_DOMAINS[i])) {
-          return IMG_PROXY + encodeURIComponent(url);
+          // wsrv.nl is a free image proxy/CDN that fetches images server-side,
+          // bypassing Referer-based hotlink protection on Instagram/Threads CDN
+          return 'https://wsrv.nl/?url=' + encodeURIComponent(url);
         }
       }
     } catch (e) {}
