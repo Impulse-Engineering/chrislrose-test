@@ -163,7 +163,9 @@ final class SupabaseClient {
     // MARK: - Write
 
     func updateLink(id: String, fields: [String: Any], retried: Bool = false) async throws {
-        let url = URL(string: "\(Config.baseURL)/rest/v1/links?id=eq.\(id)")!
+        var comps = URLComponents(string: "\(Config.baseURL)/rest/v1/links")!
+        comps.queryItems = [URLQueryItem(name: "id", value: "eq.\(id)")]
+        let url = comps.url!
         var req = URLRequest(url: url)
         req.httpMethod = "PATCH"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -186,7 +188,9 @@ final class SupabaseClient {
     }
 
     func deleteLink(id: String) async throws {
-        let url = URL(string: "\(Config.baseURL)/rest/v1/links?id=eq.\(id)")!
+        var comps = URLComponents(string: "\(Config.baseURL)/rest/v1/links")!
+        comps.queryItems = [URLQueryItem(name: "id", value: "eq.\(id)")]
+        let url = comps.url!
         var req = URLRequest(url: url)
         req.httpMethod = "DELETE"
         req.setValue(Config.anonKey, forHTTPHeaderField: "apikey")

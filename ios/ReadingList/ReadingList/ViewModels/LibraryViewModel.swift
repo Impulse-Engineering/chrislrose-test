@@ -84,7 +84,11 @@ final class LibraryViewModel {
     func updateStatus(link: Link, status: String?) async {
         let read = status == "done"
         var fields: [String: Any] = ["read": read]
-        fields["status"] = status ?? NSNull()
+        if let status {
+            fields["status"] = status
+        } else {
+            fields["status"] = NSNull()
+        }
         do {
             try await SupabaseClient.shared.updateLink(id: link.id, fields: fields)
             if let idx = allLinks.firstIndex(where: { $0.id == link.id }) {
@@ -92,6 +96,7 @@ final class LibraryViewModel {
                 allLinks[idx].read = read
             }
         } catch {
+            print("❌ updateStatus failed for \(link.id): \(error)")
             errorMessage = error.localizedDescription
         }
     }
