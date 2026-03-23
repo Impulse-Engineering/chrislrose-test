@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ArticleCardView: View {
     let link: Link
-    @State private var isPressed = false
 
     private var hasImage: Bool {
         link.image != nil
@@ -91,11 +90,6 @@ struct ArticleCardView: View {
                 .strokeBorder(statusGlowColor?.opacity(0.5) ?? Color.white.opacity(0.08), lineWidth: statusGlowColor != nil ? 1.5 : 0.5)
         )
         .shadow(color: statusGlowColor?.opacity(0.3) ?? .clear, radius: 8, x: 0, y: 2)
-        .scaleEffect(isPressed ? 0.97 : 1.0)
-        .animation(.spring(duration: 0.2, bounce: 0.5), value: isPressed)
-        .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
-            isPressed = pressing
-        }, perform: {})
     }
 
     // MARK: - Fallback

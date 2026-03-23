@@ -247,6 +247,7 @@ struct ArticleDetailView: View {
                     Button {
                         let n = currentLink.stars == i ? 0 : i
                         currentLink.stars = n
+                        Haptics.tap()
                         Task { await vm.updateStars(link: link, stars: n) }
                     } label: {
                         Image(systemName: i <= (currentLink.stars ?? 0) ? "star.fill" : "star")
@@ -284,6 +285,7 @@ struct ArticleDetailView: View {
             let newStatus = isSelected ? nil : status
             currentLink.status = newStatus
             currentLink.read = newStatus == "done"
+            Haptics.statusChange()
             Task { await vm.updateStatus(link: link, status: newStatus) }
         } label: {
             StatusPill(status: status)

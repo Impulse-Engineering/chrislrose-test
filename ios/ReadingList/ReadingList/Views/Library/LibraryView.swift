@@ -188,6 +188,7 @@ struct LibraryView: View {
                             ArticleRowView(link: link)
                         }
                     }
+                    .bouncePress()
                     .overlay(alignment: .topTrailing) {
                         if isCurating {
                             Image(systemName: curateSelection.contains(link.id) ? "checkmark.circle.fill" : "circle")
@@ -211,6 +212,7 @@ struct LibraryView: View {
                     }
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     Button {
+                        Haptics.success()
                         Task { await vm.updateStatus(link: link, status: link.status == "done" ? nil : "done") }
                     } label: {
                         Label(link.status == "done" ? "Undo" : "Done", systemImage: link.status == "done" ? "arrow.uturn.backward" : "checkmark")
