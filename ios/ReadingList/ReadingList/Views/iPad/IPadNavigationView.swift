@@ -34,9 +34,11 @@ struct IPadNavigationView: View {
 
     @State private var selectedSidebar: SidebarItem? = .library
     @State private var selectedLink: Link? = nil
+    @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
+    @State private var isPortrait: Bool = UIScreen.main.bounds.height > UIScreen.main.bounds.width
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             // Sidebar
             sidebarContent
                 .navigationTitle("Procrastinate")
@@ -48,6 +50,33 @@ struct IPadNavigationView: View {
             detailColumn
         }
         .navigationSplitViewStyle(.balanced)
+        .background(
+            GeometryReader { geo in
+                Color.clear
+                    .onAppear {
+                        isPortrait = geo.size.height > geo.size.width
+                    }
+                    .onChange(of: geo.size) { _, size in
+                        let nowPortrait = size.height > size.width
+                        if nowPortrait != isPortrait {
+                            isPortrait = nowPortrait
+                            // Rotating to landscape — restore columns
+                            if !nowPortrait {
+                                columnVisibility = .automatic
+                            }
+                            // Rotating to portrait with article open — go full-screen
+                            if nowPortrait && selectedLink != nil {
+                                columnVisibility = .detailOnly
+                            }
+                        }
+                    }
+            }
+        )
+        .onChange(of: selectedLink) { _, newLink in
+            if isPortrait {
+                columnVisibility = newLink != nil ? .detailOnly : .automatic
+            }
+        }
     }
 
     // MARK: - Sidebar
@@ -144,6 +173,17 @@ struct IPadNavigationView: View {
                 .navigationTitle(link.title ?? link.domain ?? "Article")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    if isPortrait {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                selectedLink = nil
+                                columnVisibility = .automatic
+                            } label: {
+                                Image(systemName: "chevron.left")
+                            }
+                            .help("Back to list")
+                        }
+                    }
                     ToolbarItemGroup(placement: .topBarTrailing) {
                         Button {
                             Haptics.success()
