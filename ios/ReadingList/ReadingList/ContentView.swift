@@ -4,6 +4,7 @@ struct ContentView: View {
     @Environment(AuthViewModel.self) private var authVM
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var libraryVM = ContentView.sharedLibraryVM
+    @State private var selectedTab = "read"
 
     static let sharedLibraryVM = LibraryViewModel()
 
@@ -30,23 +31,23 @@ struct ContentView: View {
     }
 
     var tabs: some View {
-        TabView {
-            Tab("Library", systemImage: "books.vertical") {
-                LibraryView(statusFilter: nil)
-                    .environment(libraryVM)
-                    .environment(authVM)
-            }
-            Tab("Read", systemImage: "book") {
+        TabView(selection: $selectedTab) {
+            Tab("Read", systemImage: "book", value: "read") {
                 LibraryView(statusFilter: "to-read")
                     .environment(libraryVM)
                     .environment(authVM)
             }
-            Tab("Do", systemImage: "hammer") {
+            Tab("Do", systemImage: "hammer", value: "do") {
                 LibraryView(statusFilter: "to-try")
                     .environment(libraryVM)
                     .environment(authVM)
             }
-            Tab("Search", systemImage: "magnifyingglass", role: .search) {
+            Tab("Library", systemImage: "books.vertical", value: "library") {
+                LibraryView(statusFilter: nil)
+                    .environment(libraryVM)
+                    .environment(authVM)
+            }
+            Tab("Search", systemImage: "magnifyingglass", value: "search", role: .search) {
                 SearchView()
                     .environment(libraryVM)
             }

@@ -17,6 +17,7 @@ struct LibraryView: View {
     @State private var curateSelection: Set<String> = []
     @State private var showCurateSheet = false
     @State private var infoLink: Link? = nil
+    @State private var showTagCloud = false
     @AppStorage("libraryViewMode") private var viewMode: String = "cards"
 
     var navTitle: String {
@@ -42,6 +43,14 @@ struct LibraryView: View {
         }
         if vm.sortByStars {
             result = result.sorted { ($0.stars ?? 0) > ($1.stars ?? 0) }
+        }
+        if let tag = vm.selectedTag {
+            result = result.filter { link in
+                guard let tags = link.tags else { return false }
+                return tags.split(separator: ",")
+                    .map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+                    .contains(tag.lowercased())
+            }
         }
         if !vm.searchQuery.isEmpty {
             let tokens = vm.searchQuery.lowercased().split(separator: " ").map(String.init)
@@ -152,6 +161,11 @@ struct LibraryView: View {
         .sheet(item: $infoLink) { link in
             ArticleDetailView(link: link)
                 .environment(vm)
+        }
+        .sheet(isPresented: $showTagCloud) {
+            TagCloudView(tagCounts: vm.tagCounts) { tag in
+                vm.selectedTag = tag
+            }
         }
     }
 
@@ -409,14 +423,26 @@ struct LibraryView: View {
                     .disabled(vm.unenrichedLinks.isEmpty || vm.isEnrichingAll)
                 }
 
-                // Clear
+                // Active tag
+                if let tag = vm.selectedTag {
+                    Section("Tag Filter") {
+                        Button(role: .destructive) {
+                            vm.selectedTag = nil
+                        } label: {
+                            Label("Clear: \(tag)", systemImage: "tag.slash")
+                        }
+                    }
+                }
+
+                // Clear all
                 if vm.hasActiveFilters {
                     Section {
                         Button(role: .destructive) {
                             vm.selectedCategory = nil
+                            vm.selectedTag = nil
                             vm.sortByStars = false
                         } label: {
-                            Label("Clear Filters", systemImage: "xmark.circle")
+                            Label("Clear All Filters", systemImage: "xmark.circle")
                         }
                     }
                 }
@@ -426,6 +452,15 @@ struct LibraryView: View {
                       : "line.3.horizontal.decrease.circle")
                     .foregroundStyle(vm.hasActiveFilters ? Color.accentColor : Color.primary)
                     .symbolEffect(.bounce, value: vm.hasActiveFilters)
+            }
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                showTagCloud = true
+            } label: {
+                Image(systemName: vm.selectedTag != nil ? "tag.fill" : "tag")
+                    .foregroundStyle(vm.selectedTag != nil ? Color.indigo : Color.primary)
+                    .symbolEffect(.bounce, value: vm.selectedTag)
             }
         }
         ToolbarItem(placement: .topBarTrailing) {

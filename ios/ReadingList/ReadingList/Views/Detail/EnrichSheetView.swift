@@ -314,6 +314,59 @@ enum EnrichError: LocalizedError {
 #if canImport(FoundationModels)
 @available(iOS 26, *)
 enum EnrichEngine {
+
+    // MARK: - Category keyword rules (specific beats general)
+    // Each rule: if ANY keyword matches the article text, use that category.
+    // Rules are evaluated in order — first match wins, so put most-specific first.
+    static let categoryRules: [(keywords: [String], category: String)] = [
+        // Most specific — product/tool names
+        (["apple intelligence", "apple vision", "vision pro", "visionos"], "Apple"),
+        (["iphone", "ipad", "macbook", "mac mini", "mac pro", "apple watch",
+          "airpods", "homepod", "apple tv", "apple silicon", "m1", "m2", "m3", "m4",
+          "ios ", "ipados", "macos", "watchos", "tvos", "xcode", "swift ", "swiftui",
+          "wwdc", "apple developer", "app store", "testflight", "uikit", "appkit"], "Apple"),
+        (["claude ", "anthropic", "claude.ai", "claude code", "claude opus",
+          "claude sonnet", "claude haiku"], "Claude"),
+        // Broad AI — after Claude/Apple-specific checks
+        (["openai", "chatgpt", "gpt-4", "gpt-3", "gemini", "llama", "mistral",
+          "copilot", "cursor ", "midjourney", "stable diffusion", "dall-e",
+          "large language model", "llm", "generative ai", "ai agent",
+          "artificial intelligence", "machine learning", "deep learning",
+          "neural network", "foundation model", "rag ", "vector database"], "AI"),
+        // Tech — after AI-specific checks
+        (["javascript", "typescript", "python", "rust ", "golang", "react ",
+          "kubernetes", "docker ", "aws ", "cloud ", "api ", "developer",
+          "programming", "software engineer", "open source", "github",
+          "database", "backend", "frontend", "devops", "cybersecurity",
+          "security vulnerability", "zero day", "infosec"], "Tech"),
+    ]
+
+    /// Apply keyword-based category override rules.
+    /// Returns the best matching category from `available`, or falls back to `aiSuggestion`.
+    static func refineCategory(
+        aiSuggestion: String,
+        title: String,
+        description: String,
+        url: String,
+        available: [String]
+    ) -> String {
+        let haystack = "\(title) \(description) \(url)".lowercased()
+        let availableLower = available.map { $0.lowercased() }
+
+        for rule in categoryRules {
+            guard rule.keywords.contains(where: { haystack.contains($0) }) else { continue }
+            // Find this category in the available list (case-insensitive)
+            if let match = available.first(where: { $0.lowercased() == rule.category.lowercased() }) {
+                return match
+            }
+        }
+        // No rule matched — return the AI suggestion if it's a known category, else first available
+        if available.isEmpty { return aiSuggestion }
+        return available.first(where: { $0.lowercased() == aiSuggestion.lowercased() }) ?? aiSuggestion
+    }
+
+    // MARK: - Main enrich function
+
     static func enrich(link: Link, categories: [String]) async throws -> EnrichSuggestions {
         let categoryList = categories.isEmpty
             ? "General, Tech, Design, Business"
@@ -331,14 +384,21 @@ enum EnrichEngine {
 
         Available categories: \(categoryList)
 
-        Respond with only a JSON object with these exact keys:
-        - cleanTitle: the title cleaned up (remove site name, pipes, SEO noise)
-        - summary: 2-3 sentence summary based on the title and description
-        - tags: comma-separated relevant tags (lowercase, concise)
-        - category: single best category from the available list
-        - status: one of "to-read" (essays, long reads), "to-try" (tutorials, how-tos), "to-share" (news, opinions), "done" (completed)
+        Category selection rules — prefer the most specific match:
+        - If the article is about Apple products, iOS, macOS, Swift, or Xcode → pick "Apple" if available
+        - If it mentions Claude or Anthropic specifically → pick "Claude" if available
+        - If it's about AI/ML tools or LLMs in general → pick "AI" if available
+        - "AI" is more specific than "Tech" — don't pick "Tech" for AI content
+        - Only use "Tech" for general software/engineering content with no better match
 
-        Return only valid JSON, no markdown.
+        Respond with only a JSON object with these exact keys:
+        - cleanTitle: the title cleaned up (remove site name, pipes, SEO noise; keep it concise)
+        - summary: 2-3 sentence summary based on the title and description
+        - tags: 3-6 comma-separated relevant tags (lowercase, concise, no duplicates)
+        - category: single best category from the available list
+        - status: one of "to-read" (essays/long reads), "to-try" (tutorials/how-tos), "to-share" (news/opinions), "done" (already completed)
+
+        Return only valid JSON, no markdown, no explanation.
         """
 
         do {
@@ -346,22 +406,17 @@ enum EnrichEngine {
             let response = try await session.respond(to: prompt)
             var text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
 
-            // Strip markdown code fences if present (```json ... ``` or ``` ... ```)
+            // Strip markdown code fences
             if text.hasPrefix("```") {
-                // Remove opening fence (```json or ```)
                 if let firstNewline = text.firstIndex(of: "\n") {
                     text = String(text[text.index(after: firstNewline)...])
                 }
-                // Remove closing fence
-                if text.hasSuffix("```") {
-                    text = String(text.dropLast(3))
-                }
+                if text.hasSuffix("```") { text = String(text.dropLast(3)) }
                 text = text.trimmingCharacters(in: .whitespacesAndNewlines)
             }
 
-            // Try to find JSON object in the response
-            if let start = text.firstIndex(of: "{"),
-               let end = text.lastIndex(of: "}") {
+            // Extract JSON object
+            if let start = text.firstIndex(of: "{"), let end = text.lastIndex(of: "}") {
                 text = String(text[start...end])
             }
 
@@ -370,18 +425,27 @@ enum EnrichEngine {
                 throw EnrichError.parseFailure(text)
             }
 
-            // Convert any value to String
             func str(_ key: String) -> String {
                 if let s = rawJson[key] as? String { return s }
                 if let n = rawJson[key] as? NSNumber { return n.stringValue }
                 return ""
             }
 
+            // Apply keyword override rules on top of AI category suggestion
+            let aiCategory = str("category")
+            let refinedCategory = refineCategory(
+                aiSuggestion: aiCategory,
+                title: link.title ?? "",
+                description: link.description ?? "",
+                url: link.url,
+                available: categories
+            )
+
             return EnrichSuggestions(
                 cleanTitle: str("cleanTitle").isEmpty ? (link.title ?? "") : str("cleanTitle"),
                 summary: str("summary"),
                 tags: str("tags"),
-                category: str("category"),
+                category: refinedCategory,
                 status: str("status").isEmpty ? "to-read" : str("status")
             )
         } catch let error as EnrichError {

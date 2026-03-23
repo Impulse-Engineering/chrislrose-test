@@ -7,6 +7,10 @@ struct ArticleDetailView: View {
 
     @State private var editedNote: String = ""
     @State private var isEditingNote = false
+    @State private var editedTitle: String = ""
+    @State private var isEditingTitle = false
+    @State private var editedTags: String = ""
+    @State private var isEditingTags = false
     @State private var showEnrich = false
     @State private var selectedRelated: Link? = nil
     @State private var currentLink: Link
@@ -15,6 +19,8 @@ struct ArticleDetailView: View {
         self.link = link
         self._currentLink = State(initialValue: link)
         self._editedNote = State(initialValue: link.note ?? "")
+        self._editedTitle = State(initialValue: link.title ?? "")
+        self._editedTags = State(initialValue: link.tags ?? "")
     }
 
     var body: some View {
@@ -59,11 +65,9 @@ struct ArticleDetailView: View {
                         .padding(.top, 20)
 
                     // Category + Tags
-                    if currentLink.category != nil || hasTagContent {
-                        metaSection
-                            .padding(.horizontal, 16)
-                            .padding(.top, 20)
-                    }
+                    metaSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 20)
 
                     // Duplicate warning
                     if !vm.duplicatesOf(currentLink).isEmpty {
@@ -204,11 +208,45 @@ struct ArticleDetailView: View {
 
     var titleSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(currentLink.title ?? currentLink.url)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
+            if isEditingTitle {
+                TextField("Title", text: $editedTitle, axis: .vertical)
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .padding(8)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                HStack {
+                    Button("Cancel") {
+                        editedTitle = currentLink.title ?? ""
+                        isEditingTitle = false
+                    }
+                    .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Save") {
+                        let trimmed = editedTitle.trimmingCharacters(in: .whitespaces)
+                        if !trimmed.isEmpty {
+                            currentLink.title = trimmed
+                            Task { await vm.updateTitle(link: link, title: trimmed) }
+                        }
+                        isEditingTitle = false
+                    }
+                    .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+            } else {
+                Button {
+                    editedTitle = currentLink.title ?? ""
+                    isEditingTitle = true
+                } label: {
+                    Text(currentLink.title ?? currentLink.url)
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+            }
 
             if let desc = currentLink.description, !desc.isEmpty {
                 Text(desc)
@@ -370,29 +408,91 @@ struct ArticleDetailView: View {
 
     var metaSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if let category = currentLink.category {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Category")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
-                    Text(category)
-                        .font(.subheadline)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color.indigo.opacity(0.15))
-                        .foregroundStyle(.indigo)
-                        .clipShape(Capsule())
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Category")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                Menu {
+                    Button("None") {
+                        currentLink.category = nil
+                        Task { await vm.updateCategory(link: link, category: nil) }
+                    }
+                    ForEach(vm.categories) { cat in
+                        Button(cat.name) {
+                            currentLink.category = cat.name
+                            Task { await vm.updateCategory(link: link, category: cat.name) }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(currentLink.category ?? "None")
+                            .font(.subheadline)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption2)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.indigo.opacity(0.15))
+                    .foregroundStyle(.indigo)
+                    .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
 
-            if let tags = currentLink.tags, !tags.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Tags")
-                        .font(.footnote.weight(.semibold))
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Tags")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+
+                if isEditingTags {
+                    TextField("ai, tools, design, swift…", text: $editedTags, axis: .vertical)
+                        .font(.subheadline)
+                        .padding(10)
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    Text("Comma-separated")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    HStack {
+                        Button("Cancel") {
+                            editedTags = currentLink.tags ?? ""
+                            isEditingTags = false
+                        }
                         .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
-                    FlowLayout(tags: tags.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) })
+                        Spacer()
+                        Button("Save") {
+                            let cleaned = editedTags
+                                .split(separator: ",")
+                                .map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+                                .filter { !$0.isEmpty }
+                                .joined(separator: ", ")
+                            currentLink.tags = cleaned.isEmpty ? nil : cleaned
+                            isEditingTags = false
+                            Task { await vm.updateTags(link: link, tags: cleaned.isEmpty ? nil : cleaned) }
+                        }
+                        .fontWeight(.semibold)
+                    }
+                    .font(.subheadline)
+                } else {
+                    Button {
+                        editedTags = currentLink.tags ?? ""
+                        isEditingTags = true
+                    } label: {
+                        if let tags = currentLink.tags, !tags.isEmpty {
+                            FlowLayout(tags: tags.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) })
+                        } else {
+                            Label("Add tags…", systemImage: "plus.circle")
+                                .foregroundStyle(.secondary)
+                                .font(.subheadline)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(10)
+                                .background(Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        }
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

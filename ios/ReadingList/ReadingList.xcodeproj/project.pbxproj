@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		9A53C9242F705B9900E9CD72 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A53C9232F705B9900E9CD72 /* WidgetKit.framework */; };
 		9A53C9262F705B9900E9CD72 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A53C9252F705B9900E9CD72 /* SwiftUI.framework */; };
-		9A53C9312F705B9A00E9CD72 /* ReadlingListWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9A53C9212F705B9900E9CD72 /* ReadlingListWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9A53C9312F705B9A00E9CD72 /* ReadlingListWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9A53C9212F705B9900E9CD72 /* ReadlingListWidgetExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,11 +51,21 @@
 			);
 			target = 9A53C9202F705B9900E9CD72 /* ReadlingListWidgetExtension */;
 		};
+		9A53CA802F70B96B00E9CD72 /* Exceptions for "ReadingList" folder in "ReadingList" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9A2A56502F6F938F00FFB56C /* ReadingList */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9A2A56532F6F938F00FFB56C /* ReadingList */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9A53CA802F70B96B00E9CD72 /* Exceptions for "ReadingList" folder in "ReadingList" target */,
+			);
 			path = ReadingList;
 			sourceTree = "<group>";
 		};
@@ -241,6 +251,7 @@
 /* Begin PBXTargetDependency section */
 		9A53C9302F705B9A00E9CD72 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			platformFilter = ios;
 			target = 9A53C9202F705B9900E9CD72 /* ReadlingListWidgetExtension */;
 			targetProxy = 9A53C92F2F705B9A00E9CD72 /* PBXContainerItemProxy */;
 		};
@@ -378,6 +389,7 @@
 				DEVELOPMENT_TEAM = TS7DPN2457;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ReadingList/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Procrastinate;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -392,6 +404,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.chrislrose.ReadingList;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -411,6 +426,7 @@
 				DEVELOPMENT_TEAM = TS7DPN2457;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ReadingList/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Procrastinate;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -425,6 +441,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.chrislrose.ReadingList;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -456,6 +475,9 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -486,6 +508,9 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;

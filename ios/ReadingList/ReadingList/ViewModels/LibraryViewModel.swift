@@ -14,6 +14,7 @@ final class LibraryViewModel {
     // Filters
     var selectedStatus: String? = nil
     var selectedCategory: String? = nil
+    var selectedTag: String? = nil
     var sortByStars: Bool = false
     var searchQuery: String = ""
 
@@ -25,7 +26,21 @@ final class LibraryViewModel {
     var aiSearchResults: [Link]? = nil
 
     var hasActiveFilters: Bool {
-        selectedCategory != nil || sortByStars
+        selectedCategory != nil || selectedTag != nil || sortByStars
+    }
+
+    var tagCounts: [(tag: String, count: Int)] {
+        var counts: [String: Int] = [:]
+        for link in allLinks {
+            guard let tags = link.tags else { continue }
+            for raw in tags.split(separator: ",") {
+                let tag = raw.trimmingCharacters(in: .whitespaces).lowercased()
+                guard !tag.isEmpty else { continue }
+                counts[tag, default: 0] += 1
+            }
+        }
+        return counts.map { (tag: $0.key, count: $0.value) }
+                     .sorted { $0.count > $1.count || ($0.count == $1.count && $0.tag < $1.tag) }
     }
 
     var filteredLinks: [Link] {
@@ -118,6 +133,42 @@ final class LibraryViewModel {
         }
     }
 
+    func updateTitle(link: Link, title: String) async {
+        do {
+            try await SupabaseClient.shared.updateLink(id: link.id, fields: ["title": title])
+            allLinks = (try? await SupabaseClient.shared.fetchLinks()) ?? allLinks
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func updateTags(link: Link, tags: String?) async {
+        var fields: [String: Any] = [:]
+        if let tags, !tags.isEmpty { fields["tags"] = tags }
+        else { fields["tags"] = NSNull() }
+        do {
+            try await SupabaseClient.shared.updateLink(id: link.id, fields: fields)
+            allLinks = (try? await SupabaseClient.shared.fetchLinks()) ?? allLinks
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func updateCategory(link: Link, category: String?) async {
+        var fields: [String: Any] = [:]
+        if let category {
+            fields["category"] = category
+        } else {
+            fields["category"] = NSNull()
+        }
+        do {
+            try await SupabaseClient.shared.updateLink(id: link.id, fields: fields)
+            allLinks = (try? await SupabaseClient.shared.fetchLinks()) ?? allLinks
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func updateEnrich(link: Link, fields: [String: Any]) async {
         guard !fields.isEmpty else { return }
         do {
@@ -131,8 +182,11 @@ final class LibraryViewModel {
     // MARK: - Enrich All (batch)
 
     var unenrichedLinks: [Link] {
-        // Articles that have no AI-generated note (note is nil or empty)
-        allLinks.filter { $0.note == nil || ($0.note?.isEmpty == true) }
+        // Articles that have no AI-generated summary AND no user note
+        allLinks.filter {
+            ($0.summary == nil || $0.summary?.isEmpty == true) &&
+            ($0.note == nil || $0.note?.isEmpty == true)
+        }
     }
 
     @available(iOS 26, *)
