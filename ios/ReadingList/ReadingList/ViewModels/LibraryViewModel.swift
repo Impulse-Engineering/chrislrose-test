@@ -92,8 +92,10 @@ final class LibraryViewModel {
         do {
             try await SupabaseClient.shared.updateLink(id: link.id, fields: fields)
             if let idx = allLinks.firstIndex(where: { $0.id == link.id }) {
-                allLinks[idx].status = status
-                allLinks[idx].read = read
+                var updated = allLinks[idx]
+                updated.status = status
+                updated.read = read
+                allLinks[idx] = updated  // Replace entire element to trigger @Observable
             }
         } catch {
             print("❌ updateStatus failed for \(link.id): \(error)")
@@ -105,7 +107,9 @@ final class LibraryViewModel {
         do {
             try await SupabaseClient.shared.updateLink(id: link.id, fields: ["stars": stars])
             if let idx = allLinks.firstIndex(where: { $0.id == link.id }) {
-                allLinks[idx].stars = stars
+                var updated = allLinks[idx]
+                updated.stars = stars
+                allLinks[idx] = updated
             }
         } catch {
             errorMessage = error.localizedDescription
@@ -116,7 +120,9 @@ final class LibraryViewModel {
         do {
             try await SupabaseClient.shared.updateLink(id: link.id, fields: ["note": note])
             if let idx = allLinks.firstIndex(where: { $0.id == link.id }) {
-                allLinks[idx].note = note.isEmpty ? nil : note
+                var updated = allLinks[idx]
+                updated.note = note.isEmpty ? nil : note
+                allLinks[idx] = updated
             }
         } catch {
             errorMessage = error.localizedDescription
@@ -128,15 +134,17 @@ final class LibraryViewModel {
         do {
             try await SupabaseClient.shared.updateLink(id: link.id, fields: fields)
             if let idx = allLinks.firstIndex(where: { $0.id == link.id }) {
-                if let t = fields["title"] as? String { allLinks[idx].title = t }
-                if let n = fields["note"] as? String { allLinks[idx].note = n.isEmpty ? nil : n }
-                if let s = fields["summary"] as? String { allLinks[idx].summary = s.isEmpty ? nil : s }
-                if let ta = fields["tags"] as? String { allLinks[idx].tags = ta.isEmpty ? nil : ta }
-                if let c = fields["category"] as? String { allLinks[idx].category = c.isEmpty ? nil : c }
+                var updated = allLinks[idx]
+                if let t = fields["title"] as? String { updated.title = t }
+                if let n = fields["note"] as? String { updated.note = n.isEmpty ? nil : n }
+                if let s = fields["summary"] as? String { updated.summary = s.isEmpty ? nil : s }
+                if let ta = fields["tags"] as? String { updated.tags = ta.isEmpty ? nil : ta }
+                if let c = fields["category"] as? String { updated.category = c.isEmpty ? nil : c }
                 if let s = fields["status"] as? String {
-                    allLinks[idx].status = s
-                    allLinks[idx].read = (s == "done")
+                    updated.status = s
+                    updated.read = (s == "done")
                 }
+                allLinks[idx] = updated
             }
         } catch {
             errorMessage = error.localizedDescription
