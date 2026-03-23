@@ -134,18 +134,99 @@ Admin access is via a FAB button (bottom-right). Logging in activates `admin-mod
 
 ## iOS App Project
 
-A native iOS 26 reading list app is planned. Full brief — all decisions, feature ideas, tech stack, Supabase connection details, build order, and development setup — is documented in:
+A native iOS reading list app (app name: **Procrastinate**). Full brief is in **`ios-app-brief.md`** (root of this repo) — read it before starting iOS work.
 
-**`ios-app-brief.md`** (root of this repo)
-
-Read that file before starting any iOS app work. Key points:
+Key points:
 - SwiftUI, iOS 26 target, Liquid Glass design language
 - Same Supabase backend as the website (shared data)
-- On-device AI via Foundation Models (`FoundationModels` framework) — Enrich button, auto-tagging, TL;DR summaries
+- On-device AI via Foundation Models (`FoundationModels` framework, iOS 26+)
 - No Share Extension (deliberately skipped — avoid $99/year dev account requirement)
 - Saving articles stays via existing iOS Shortcut/bookmarklet flow
-- App lives in `/ios/` subfolder of this repo
+- App lives in `/ios/ReadingList/` subfolder of this repo
+- Mac Catalyst enabled (`SUPPORTS_MACCATALYST = YES`); `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO`
+
+### iOS App Architecture
+
+- **`@Observable` + `@MainActor`** throughout — `LibraryViewModel` is the single source of truth
+- **`SupabaseClient.shared`** — raw URLSession + JSONDecoder, no SDK
+- **`SubtaskStore.shared`** — `@Observable` singleton, local-only persistence via `UserDefaults` + `Codable`
+- Tabs (in order): **Read → Do → Library → Search** — defaults to Read tab on launch
+- `TabView(selection: $selectedTab)` with `@State private var selectedTab = "read"` in ContentView
+
+### iOS App File Structure (key files)
+
+```
+ios/ReadingList/ReadingList/
+├── ContentView.swift               # TabView, tab order, default tab
+├── Models/
+│   ├── Link.swift                  # Core data model (NOT SwiftUI.Link — naming conflict in IDE, builds fine)
+│   ├── Category.swift
+│   └── Subtask.swift               # Local subtask model + SubtaskStore singleton
+├── ViewModels/
+│   └── LibraryViewModel.swift      # All data, filters, AI search, enrich all
+├── Views/
+│   ├── Detail/
+│   │   ├── ArticleDetailView.swift # Editable title, category, tags inline
+│   │   └── EnrichSheetView.swift   # AI enrichment sheet + EnrichEngine
+│   ├── Library/
+│   │   ├── LibraryView.swift       # Main library, tag cloud button, filters
+│   │   ├── TagCloudView.swift      # Full-screen weighted tag cloud, tap to filter
+│   │   ├── TaskRowView.swift       # Do-tab rows with inline subtask expand/collapse
+│   │   └── SubtaskEditorView.swift # Half-sheet subtask manager
+│   └── ...
+└── Services/
+    └── SupabaseClient.swift
+```
+
+### iOS App — Features Implemented
+
+**Enrich with AI (`EnrichSheetView` / `EnrichEngine`)**
+- Uses `LanguageModelSession` (Foundation Models, iOS 26 only)
+- Falls back gracefully with `ContentUnavailableView` on older OS / devices without Apple Intelligence
+- Returns: cleanTitle, summary, tags (3–6 comma-separated), category, status
+- **Deterministic category override:** after AI responds, `refineCategory()` applies keyword rules in priority order — first match wins:
+  1. Apple-specific (Vision Pro, visionOS)
+  2. Apple-general (iPhone, iPad, Swift, SwiftUI, Xcode, WWDC, etc.)
+  3. Claude / Anthropic
+  4. AI/ML (OpenAI, ChatGPT, LLM, generative AI, etc.)
+  5. Tech (JavaScript, Python, developer, cybersecurity, etc.)
+- `unenrichedLinks` counts articles with no `summary` AND no `note` (both must be empty)
+- "Enrich All" batch-processes unenriched articles sequentially, shows progress
+
+**Tag Cloud (`TagCloudView`)**
+- Full-screen sheet, tags weighted by frequency (font size 13–33pt, opacity 0.45–1.0)
+- Custom `TagFlowLayout: Layout` for true word-wrapping
+- Search bar to filter tags; tap any tag to close sheet and filter library
+- Toolbar button shows `tag.fill` (indigo) when a tag filter is active
+- `tagCounts` computed property on `LibraryViewModel` parses comma-separated tags
+
+**Subtasks (`SubtaskStore`, `TaskRowView`, `SubtaskEditorView`)**
+- Local-only (not synced to Supabase) — stored in `UserDefaults` keyed by link ID
+- Long-press any Do-tab item → context menu → "Manage Subtasks" (`.contextMenu` used instead of `.onLongPressGesture` because inner Buttons swallow gestures in SwiftUI List)
+- Inline expand/collapse with spring animation and mini progress capsule
+- `SubtaskEditorView`: half-sheet (`.presentationDetents([.medium, .large])`), staggered entrance animation, auto-focuses add field
+
+**Editable fields in ArticleDetailView**
+- Title: tap to edit inline (TextField + Save/Cancel)
+- Category: Menu picker from `vm.categories` + "None" option
+- Tags: tap to edit comma-separated TextField; normalizes to lowercase on save; always visible with "Add tags…" placeholder
+
+### iOS App — Known Issues / Gotchas
+
+- **`Link` name conflict:** The app's `Link` model clashes with `SwiftUI.Link<Label>` in SourceKit's single-file analysis. This shows as "Reference to generic type 'Link' requires arguments" in the IDE but **does not cause actual build failures** — the module compiler resolves it correctly. Do not rename the model.
+- **Mac Catalyst SourceKit warnings:** `topBarLeading`, `topBarTrailing`, `navigationBarTitleDisplayMode` show as "unavailable in macOS" in the IDE but are fully supported on Mac Catalyst (iOS APIs via Catalyst). These are false positives — ignore them.
+- **PBXFileSystemSynchronizedRootGroup:** The Xcode project uses filesystem-synced groups. New `.swift` files added to the correct folder are automatically included in the target — no need to manually edit `project.pbxproj` to add sources.
+- **Deployment:** `chrislrose.aseva.ai` is company-managed and does NOT auto-deploy from GitHub pushes. GitHub Pages mirror auto-deploys. To update the primary site, manual deployment is needed (SSH access required).
+
+### Website — OG / Social Previews
+
+All HTML pages have Open Graph and Twitter Card meta tags for iMessage/social rich link previews:
+- `og-image.png` — main site preview (1200×630, dark indigo)
+- `og-reading-list.png` — reading list preview
+- `c.php` — dynamic collection share handler: fetches Supabase collection, outputs per-recipient OG tags, JS-redirects users to reading-list.html
+- Collection share URLs use `c.php?id=` (not `?collection=`) — set in `reading-list.js`
+- OG images must be **PNG** (not SVG) — iMessage and most crawlers do not render SVG
 
 ---
 
-*Last updated: 2026-03-21 by Claude Code*
+*Last updated: 2026-03-22 by Claude Code*
