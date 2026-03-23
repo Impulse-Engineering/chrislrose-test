@@ -188,7 +188,6 @@ struct LibraryView: View {
                             ArticleRowView(link: link)
                         }
                     }
-                    .bouncePress()
                     .overlay(alignment: .topTrailing) {
                         if isCurating {
                             Image(systemName: curateSelection.contains(link.id) ? "checkmark.circle.fill" : "circle")
@@ -199,6 +198,7 @@ struct LibraryView: View {
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
+                        Haptics.tap()
                         if isCurating {
                             if curateSelection.contains(link.id) {
                                 curateSelection.remove(link.id)
