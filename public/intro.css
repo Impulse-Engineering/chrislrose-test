@@ -1,0 +1,407 @@
+/* =============================================================
+   INTRO / SPLASH SCREEN — Classic Mac '84 + Matrix pill choice
+   ============================================================= */
+
+/* ── Overlay container ─────────────────────────────────────── */
+#intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50000;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#intro-overlay.intro-hidden {
+  pointer-events: none;
+  display: none;
+}
+
+/* Lock body scroll while intro plays */
+body.intro-active {
+  overflow: hidden;
+}
+
+/* ── CRT scanline overlay ──────────────────────────────────── */
+#intro-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Happy Mac pixel icon (CSS pixel art) ──────────────────── */
+.intro-happy-mac {
+  width: 96px;
+  height: 96px;
+  position: relative;
+  opacity: 0;
+  image-rendering: pixelated;
+}
+
+.intro-happy-mac svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── "hello" script text ───────────────────────────────────── */
+.intro-hello {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-style: italic;
+  font-size: clamp(3rem, 10vw, 6rem);
+  color: #fff;
+  letter-spacing: 0.04em;
+  margin-top: 1rem;
+  opacity: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* SVG path animation for "hello" handwriting effect */
+.intro-hello-svg {
+  width: clamp(200px, 50vw, 420px);
+  height: auto;
+  margin-top: 1rem;
+  opacity: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.intro-hello-svg path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Phase 2: Matrix wake-up text ──────────────────────────── */
+.intro-wake-text {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: clamp(0.9rem, 2.5vw, 1.25rem);
+  color: #00ff41;
+  letter-spacing: 0.08em;
+  margin-top: 2.5rem;
+  opacity: 0;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+}
+
+/* ── Pill choice buttons ───────────────────────────────────── */
+.intro-pills {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2rem;
+  opacity: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.intro-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.8rem;
+  border-radius: 50px;
+  border: 2px solid transparent;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  background: transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.intro-pill:hover {
+  transform: scale(1.05);
+}
+
+/* Red pill */
+.intro-pill--red {
+  color: #ff4444;
+  border-color: #ff4444;
+  text-shadow: 0 0 6px rgba(255, 68, 68, 0.4);
+}
+
+.intro-pill--red:hover,
+.intro-pill--red:focus {
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.3), inset 0 0 20px rgba(255, 68, 68, 0.1);
+}
+
+/* Blue pill */
+.intro-pill--blue {
+  color: #58a6ff;
+  border-color: #58a6ff;
+  text-shadow: 0 0 6px rgba(88, 166, 255, 0.4);
+}
+
+.intro-pill--blue:hover,
+.intro-pill--blue:focus {
+  box-shadow: 0 0 20px rgba(88, 166, 255, 0.3), inset 0 0 20px rgba(88, 166, 255, 0.1);
+}
+
+/* Glow pulse on auto-select */
+.intro-pill--blue.intro-pill--glow {
+  box-shadow:
+    0 0 30px rgba(88, 166, 255, 0.5),
+    0 0 60px rgba(88, 166, 255, 0.25),
+    inset 0 0 30px rgba(88, 166, 255, 0.15);
+  background: rgba(88, 166, 255, 0.1);
+  border-color: #79c0ff;
+  color: #79c0ff;
+}
+
+.intro-pill--red.intro-pill--glow {
+  box-shadow:
+    0 0 30px rgba(255, 68, 68, 0.5),
+    0 0 60px rgba(255, 68, 68, 0.25),
+    inset 0 0 30px rgba(255, 68, 68, 0.15);
+  background: rgba(255, 68, 68, 0.1);
+  border-color: #ff6666;
+  color: #ff6666;
+}
+
+/* Pill circle icon */
+.intro-pill-circle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.intro-pill--red .intro-pill-circle {
+  background: #ff4444;
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+}
+
+.intro-pill--blue .intro-pill-circle {
+  background: #58a6ff;
+  box-shadow: 0 0 8px rgba(88, 166, 255, 0.6);
+}
+
+/* ── Skip prompt ───────────────────────────────────────────── */
+.intro-skip {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  z-index: 3;
+  opacity: 0;
+  animation: intro-skip-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes intro-skip-blink {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.15; }
+}
+
+/* ── Matrix rain canvas (intro-specific) ───────────────────── */
+#intro-matrix-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Matrix dive canvas (3D fly-through) ──────────────────── */
+#intro-dive-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Glitch flash for transition ───────────────────────────── */
+.intro-glitch-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  background: #fff;
+  mix-blend-mode: overlay;
+}
+
+/* ── 90s Internet Chaos (red pill easter egg) ────────────── */
+.intro-chaos {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.intro-chaos-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    repeating-linear-gradient(45deg, #ff00ff22 0px, #ff00ff22 10px, transparent 10px, transparent 20px),
+    repeating-linear-gradient(-45deg, #00ffff22 0px, #00ffff22 10px, transparent 10px, transparent 20px),
+    linear-gradient(135deg, #1a0030, #002a00, #00002a);
+  opacity: 0;
+}
+
+.intro-chaos-banner {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  font-weight: bold;
+  text-align: center;
+  animation: intro-rainbow 0.8s linear infinite;
+  text-shadow: 2px 2px 0 #000;
+  opacity: 0;
+}
+
+@keyframes intro-rainbow {
+  0%   { color: #ff0000; }
+  16%  { color: #ff8800; }
+  33%  { color: #ffff00; }
+  50%  { color: #00ff00; }
+  66%  { color: #0088ff; }
+  83%  { color: #ff00ff; }
+  100% { color: #ff0000; }
+}
+
+.intro-chaos-visitor {
+  font-family: 'Comic Sans MS', cursive;
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  color: #ffff00;
+  text-shadow: 1px 1px 0 #000;
+  animation: intro-blink-text 0.5s step-end infinite;
+  opacity: 0;
+}
+
+@keyframes intro-blink-text {
+  0%, 100% { visibility: visible; }
+  50%      { visibility: hidden; }
+}
+
+.intro-chaos-popup {
+  border: 3px outset #dfdfdf;
+  background: #c0c0c0;
+  min-width: 280px;
+  max-width: 90vw;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+  opacity: 0;
+}
+
+.intro-chaos-popup-titlebar {
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 3px 6px;
+}
+
+.intro-chaos-popup-body {
+  padding: 1.2rem 1rem;
+  font-family: 'Comic Sans MS', cursive;
+  font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+  color: #ff0000;
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+  animation: intro-blink-text 0.7s step-end infinite;
+}
+
+.intro-chaos-marquee {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: 'Comic Sans MS', cursive;
+  font-size: clamp(0.8rem, 2vw, 1rem);
+  color: #00ff00;
+  text-shadow: 1px 1px 0 #000;
+  opacity: 0;
+}
+
+.intro-chaos-marquee span {
+  display: inline-block;
+  animation: intro-marquee-scroll 6s linear infinite;
+}
+
+@keyframes intro-marquee-scroll {
+  0%   { transform: translateX(100vw); }
+  100% { transform: translateX(-100%); }
+}
+
+.intro-chaos-counter {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #0f0;
+  background: #000;
+  border: 2px inset #888;
+  padding: 0.3rem 0.8rem;
+  opacity: 0;
+}
+
+.intro-chaos-exit {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+  color: #00ff41;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+  margin-top: 1rem;
+  min-height: 1.5em;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .intro-pills {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .intro-pill {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.8rem;
+  }
+
+  .intro-wake-text {
+    text-align: center;
+    padding: 0 1rem;
+  }
+}
+
+/* ── Reduced motion ────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  #intro-overlay {
+    display: none !important;
+  }
+  body.intro-active {
+    overflow: auto !important;
+  }
+}
