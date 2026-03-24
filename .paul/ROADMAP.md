@@ -5,8 +5,8 @@ Migrate from a static HTML/JS site with Supabase to a modern TypeScript + Hono a
 
 ## Current Milestone
 **v0.1 Initial Release** (v0.1.0)
-Status: In progress
-Phases: 2 of 8 complete
+Status: Complete
+Phases: 8 of 8 complete
 
 ## Phases
 
@@ -14,12 +14,12 @@ Phases: 2 of 8 complete
 |-------|------|-------|--------|-----------|
 | 1 | Foundation | 1/1 | Complete | 2026-03-24 |
 | 2 | Database & Auth | 1/1 | Complete | 2026-03-24 |
-| 3 | Static Pages | TBD | Not started | - |
-| 4 | Reading List Core | TBD | Not started | - |
-| 5 | Admin System | TBD | Not started | - |
-| 6 | Collections & Sharing | TBD | Not started | - |
-| 7 | Data Migration | TBD | Not started | - |
-| 8 | Testing & Deployment | TBD | Not started | - |
+| 3 | Static Pages | 2/2 | Complete | 2026-03-23 |
+| 4 | Reading List Core | 2/2 | Complete | 2026-03-24 |
+| 5 | Admin System | 3/3 | Complete | 2026-03-24 |
+| 6 | Collections & Sharing | 1/1 | Complete | 2026-03-24 |
+| 7 | Data Migration | 1/1 | Complete | 2026-03-24 |
+| 8 | Testing & Deployment | 1/1 | Complete | 2026-03-24 |
 
 ## Phase Details
 

@@ -5,40 +5,41 @@
 See: .paul/PROJECT.md (updated 2026-03-23)
 
 **Core value:** A personal web presence that showcases who Chris is and helps him organize, curate, and share his reading list.
-**Current focus:** Phase 2 complete, ready to plan Phase 3 (Static Pages)
+**Current focus:** Phase 5 complete, ready to plan Phase 6 (Collections & Sharing)
 
 ## Current Position
 
 Milestone: v0.1 Initial Release
-Phase: 3 of 8 (Static Pages)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-03-24 — Phase 2 complete, transitioned to Phase 3
+Phase: 8 of 8 (Testing & Deployment) — Complete
+Plan: 08-01 complete (1 of 1)
+Status: MILESTONE COMPLETE — v0.1 Initial Release
+Last activity: 2026-03-24 — Phase 8 complete, milestone v0.1 done
 
 Progress:
-- Milestone: [██░░░░░░░░] 25%
-- Phase 2: [██████████] 100% Complete
+- Milestone: [██████████] 100% (8 of 8 phases complete)
+- Phase 8: [██████████] 100% Complete
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ○        ○        ○     [Ready for first PLAN of Phase 3]
+  ✓        ✓        ✓     [ALL PHASES COMPLETE — v0.1 SHIPPED]
 ```
 
 ## Accumulated Context
 
 ### Decisions
 - Migrating from vanilla HTML/JS + Supabase to TypeScript + Hono + Cloudflare (D1/Workers)
-- New development app will be registered (existing site remains live)
 - 8 phases defined: Foundation → Database & Auth → Static Pages → Reading List Core → Admin System → Collections & Sharing → Data Migration → Testing & Deployment
 - Worktree directory: .worktrees/ (project-local, hidden, gitignored)
-- Intro animation, particles, cursor effects ported to Hono app (user-requested scope expansion beyond original plan)
+- Phase 5 split into 3 plans: 05-01 (Login + Admin Mode), 05-02 (Link CRUD Modals), 05-03 (Gear Admin Dashboard)
+- Admin env-based seeding via ADMIN_EMAIL/ADMIN_PASSWORD (plaintext in env, hashed at seed time)
 
 ### Deferred Issues
-- cursor.js glow is new code (not in original site) — added per user request. May need tuning.
-- styles.css was copied as-is but cursor-glow CSS was appended — diverges from original file now.
+- cursor.js glow is new code (not in original site) — may need tuning
+- styles.css cursor-glow CSS appended — diverges from original
+- Collection creation API call stubbed (Phase 6)
 
 ### Blockers/Concerns
 None.
@@ -46,13 +47,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Phase 2 complete, transitioned to Phase 3
-Next action: /paul:plan for Phase 3 (Static Pages)
+Stopped at: Phase 5 complete, transitioned to Phase 6
+Next action: Deploy with `wrangler deploy` or plan next milestone
 Resume file: .paul/ROADMAP.md
 Resume context:
-- Phase 2 merged to main, all auth infrastructure in place
-- D1 schema, PBKDF2 auth, sessions, middleware, auth API all working
-- Phase 3 covers: Layout/Nav/Footer, CSS, server-rendered pages (about, contact, uses), gear API
+- v0.1 Initial Release milestone COMPLETE
+- All 8 phases done: Foundation, DB/Auth, Static Pages, Reading List, Admin, Collections, Migration, Testing
+- Ready to deploy to dev.chrislrose.aseva.ai
 
 ---
 *STATE.md — Updated after every significant action*
