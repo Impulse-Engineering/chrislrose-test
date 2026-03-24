@@ -7,6 +7,12 @@ import { getCollectionById } from '../db/queries';
 
 export const pages = new Hono<{ Bindings: Env }>();
 
+// Legacy URL redirect: c.html?id=X → /c/X
+pages.get('/c.html', (c) => {
+  const id = c.req.query('id');
+  return c.redirect(id ? `/c/${id}` : '/reading-list', 301);
+});
+
 pages.get('/', (c) => {
   const v = c.env.ASSET_VERSION;
 
