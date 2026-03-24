@@ -1,7 +1,9 @@
 import { Hono } from 'hono';
+import { html } from 'hono/html';
 import type { Env } from '../types';
 import { Layout } from '../components/Layout';
 import { IntroOverlay } from '../components/IntroOverlay';
+import { getCollectionById } from '../db/queries';
 
 export const pages = new Hono<{ Bindings: Env }>();
 
@@ -996,6 +998,21 @@ pages.get('/reading-list', (c) => {
         </div>
       </div>
 
+      {/* Share collection modal */}
+      <div class="rl-modal" id="share-modal" hidden>
+        <div class="rl-modal-backdrop" id="share-modal-backdrop"></div>
+        <div class="rl-modal-inner">
+          <button class="rl-modal-close" id="share-modal-close" aria-label="Close">&times;</button>
+          <p class="rl-modal-title">Share this collection</p>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">Copy this link and send it to your friend:</p>
+          <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+            <input type="text" id="share-url-input" readOnly style="flex:1;font-family:var(--font-mono);font-size:0.72rem;" />
+            <button class="btn btn-primary" id="share-copy-btn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">Copy</button>
+          </div>
+          <button class="btn" id="share-done-btn" style="width:100%;font-size:0.8rem;">Done</button>
+        </div>
+      </div>
+
       {/* Admin FAB */}
       <button class="admin-fab" id="admin-fab" title="Admin" aria-label="Admin login">
         <svg id="admin-fab-icon-lock" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1251,4 +1268,69 @@ pages.get('/admin', (c) => {
 
     </Layout>
   );
+});
+
+// ── Collection Share Page ─────────────────────────────────
+pages.get('/c/:id', async (c) => {
+  const id = c.req.param('id');
+  const collection = await getCollectionById(c.env.DB, id);
+
+  if (!collection) {
+    return c.html(
+      <Layout
+        title="Not Found"
+        description="Collection not found"
+        siteUrl={c.env.SITE_URL}
+        assetVersion={c.env.ASSET_VERSION}
+        currentPath="/c"
+      >
+        <section class="section" style="min-height:60vh;display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;">
+            <h2>Collection Not Found</h2>
+            <p style="color:var(--muted);">This collection link may have expired or been removed.</p>
+            <a href="/reading-list" class="btn btn-primary" style="margin-top:1rem;">View Reading List</a>
+          </div>
+        </section>
+      </Layout>,
+      404
+    );
+  }
+
+  const recipient = collection.recipient || 'you';
+  const siteUrl = c.env.SITE_URL || '';
+  const ogTitle = `Chris\u2019s picks for ${recipient}`;
+  const ogDesc = 'Articles handpicked from Chris Rose\u2019s reading list';
+  const ogImage = `${siteUrl}/og-reading-list.png`;
+
+  // Minimal HTML for fast OG crawling — NOT using Layout
+  return c.html(html`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${ogTitle}</title>
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Chris Rose" />
+  <meta property="og:title" content="${ogTitle}" />
+  <meta property="og:description" content="${ogDesc}" />
+  <meta property="og:image" content="${ogImage}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${ogTitle}" />
+  <meta name="twitter:description" content="${ogDesc}" />
+  <meta name="twitter:image" content="${ogImage}" />
+  <meta name="description" content="${ogDesc}" />
+  <script>window.location.replace('/reading-list?collection=${id}');</script>
+  <style>
+    body { margin:0; background:#07070f; color:#fff; font-family:-apple-system,sans-serif;
+           display:flex; align-items:center; justify-content:center; height:100vh; }
+    p { color:#818cf8; font-size:18px; }
+  </style>
+</head>
+<body>
+  <p>Opening reading list\u2026</p>
+</body>
+</html>`);
 });

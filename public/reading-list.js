@@ -104,7 +104,6 @@
         fetch('/api/categories').then(function (r) { return r.json(); })
       ];
 
-      // TODO Phase 6: Collections API not yet built — stub collection fetch
       if (state.collectionId) {
         fetches.push(
           fetch('/api/collections/' + encodeURIComponent(state.collectionId))
@@ -312,9 +311,76 @@
         showToast('Select at least one link first', 'error');
         return;
       }
-      // TODO Phase 6: POST /api/collections to create a shared collection
-      showToast('Collections API coming soon', 'info');
+
+      var linkIds   = Array.from(state.selectedIds);
+      var recipient = selectionRecipientInput.value.trim();
+      var message   = selectionMsgInput.value.trim();
+
+      selectionCreateBtn.textContent = 'Creating\u2026';
+      selectionCreateBtn.disabled = true;
+
+      fetch('/api/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient: recipient || null,
+          message:   message   || null,
+          link_ids:  linkIds
+        })
+      })
+        .then(function (res) {
+          if (!res.ok) return res.json().then(function (d) { throw new Error(d.error || 'Create failed'); });
+          return res.json();
+        })
+        .then(function (data) {
+          var shareUrl = window.location.origin + '/c/' + data.id;
+          showShareModal(shareUrl);
+          exitSelectionMode();
+        })
+        .catch(function (err) {
+          showToast('Failed to create collection: ' + err.message, 'error');
+        })
+        .then(function () {
+          selectionCreateBtn.textContent = 'Create share link';
+          selectionCreateBtn.disabled = false;
+        });
     });
+
+    // ── Share modal ───────────────────────────────────────────────
+    function showShareModal(url) {
+      var shareModal    = document.getElementById('share-modal');
+      var shareUrlInput = document.getElementById('share-url-input');
+      var shareCopyBtn  = document.getElementById('share-copy-btn');
+      var shareDoneBtn  = document.getElementById('share-done-btn');
+      var shareBackdrop = document.getElementById('share-modal-backdrop');
+      var shareClose    = document.getElementById('share-modal-close');
+
+      if (!shareModal || !shareUrlInput) return;
+
+      shareUrlInput.value = url;
+      shareModal.removeAttribute('hidden');
+
+      setTimeout(function () { shareUrlInput.select(); }, 50);
+
+      function hideModal() {
+        shareModal.setAttribute('hidden', '');
+      }
+
+      if (shareCopyBtn) {
+        shareCopyBtn.onclick = function () {
+          navigator.clipboard.writeText(url).then(function () {
+            shareCopyBtn.textContent = 'Copied!';
+            setTimeout(function () { shareCopyBtn.textContent = 'Copy'; }, 2000);
+          }).catch(function () {
+            showToast('Could not copy \u2014 try manually', 'error');
+          });
+        };
+      }
+
+      if (shareDoneBtn) { shareDoneBtn.onclick = hideModal; }
+      if (shareClose)   { shareClose.onclick   = hideModal; }
+      if (shareBackdrop){ shareBackdrop.onclick = hideModal; }
+    }
 
     // ── Collection banner ─────────────────────────────────────────
     function renderCollectionBanner(collection) {
@@ -1157,6 +1223,65 @@
     // ── Init ─────────────────────────────────────────────────────
     loadData();
     checkSession();
+
+    // ── Bookmarklet quick-save ─────────────────────────────────
+    var params = new URLSearchParams(window.location.search);
+    var addUrl = params.get('add');
+    if (addUrl) {
+      // Wait for session check to complete, then auto-save
+      // checkSession sets state.isAdmin — poll briefly
+      var bookmarkletTimer = setInterval(function () {
+        if (state.isAdmin) {
+          clearInterval(bookmarkletTimer);
+          bookmarkletSave(addUrl);
+        }
+      }, 200);
+      // Give up after 5s
+      setTimeout(function () { clearInterval(bookmarkletTimer); }, 5000);
+    }
+
+    function bookmarkletSave(url) {
+      var domain = '';
+      try { domain = new URL(url).hostname.replace(/^www\./, ''); } catch (e) {}
+
+      fetch('/api/meta?url=' + encodeURIComponent(url))
+        .then(function (r) { return r.ok ? r.json() : { title: '', description: '', image: '', favicon: '', domain: domain }; })
+        .catch(function () { return { title: '', description: '', image: '', favicon: '', domain: domain }; })
+        .then(function (meta) {
+          var entry = {
+            id:          'lnk_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8),
+            url:         url,
+            title:       meta.title || url,
+            description: meta.description || null,
+            image:       meta.image   || null,
+            favicon:     meta.favicon || ('https://www.google.com/s2/favicons?domain=' + domain + '&sz=64'),
+            domain:      meta.domain  || domain || null,
+            category:    null,
+            tags:        null,
+            stars:       0,
+            note:        null,
+            status:      'to-read',
+            read:        0,
+            private:     0,
+            saved_at:    new Date().toISOString()
+          };
+
+          return fetch('/api/links', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(entry)
+          }).then(function (res) {
+            if (!res.ok) throw new Error('Save failed');
+            state.allLinks.unshift(entry);
+            applyFilters();
+            showToast('Saved: ' + (meta.title || domain || 'Link'), 'success');
+            setTimeout(function () { window.close(); }, 1500);
+          });
+        })
+        .catch(function (err) {
+          showToast('Save failed: ' + err.message, 'error');
+        });
+    }
 
   }); // end DOMContentLoaded
 

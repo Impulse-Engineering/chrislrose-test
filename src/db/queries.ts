@@ -1,4 +1,4 @@
-import type { AdminUser, Session, Link, Category, GearItem, SiteContent } from '../types';
+import type { AdminUser, Session, Link, Category, Collection, GearItem, SiteContent } from '../types';
 
 // --- Admin queries ---
 
@@ -377,4 +377,32 @@ export async function updateSiteContent(
     .prepare('SELECT * FROM site_content WHERE id = ?')
     .bind(id)
     .first<SiteContent>();
+}
+
+// --- Collection queries ---
+
+export async function createCollection(
+  db: D1Database,
+  data: { id: string; recipient: string | null; message: string | null; link_ids: string; created_at: string }
+): Promise<Collection | null> {
+  await db
+    .prepare('INSERT INTO collections (id, recipient, message, link_ids, created_at) VALUES (?, ?, ?, ?, ?)')
+    .bind(data.id, data.recipient, data.message, data.link_ids, data.created_at)
+    .run();
+
+  return db
+    .prepare('SELECT * FROM collections WHERE id = ?')
+    .bind(data.id)
+    .first<Collection>();
+}
+
+export async function getCollectionById(
+  db: D1Database,
+  id: string
+): Promise<Collection | null> {
+  const result = await db
+    .prepare('SELECT * FROM collections WHERE id = ?')
+    .bind(id)
+    .first<Collection>();
+  return result ?? null;
 }
