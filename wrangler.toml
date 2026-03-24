@@ -1,0 +1,16 @@
+name = "chrislrose-dev"
+compatibility_date = "2026-03-01"
+main = "src/index.ts"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chrislrose-dev"
+database_id = "placeholder-create-with-wrangler"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[vars]
+SITE_URL = "https://dev.chrislrose.aseva.ai"
+ASSET_VERSION = "20260323000000"
