@@ -1,4 +1,4 @@
-import type { AdminUser, Session } from '../types';
+import type { AdminUser, Session, Link, Category } from '../types';
 
 // --- Admin queries ---
 
@@ -65,4 +65,150 @@ export async function deleteExpiredSessions(
   await db
     .prepare('DELETE FROM sessions WHERE expires_at <= datetime(\'now\')')
     .run();
+}
+
+// --- Link queries ---
+
+export interface GetLinksOptions {
+  category?: string;
+  status?: string;
+  includePrivate?: boolean;
+}
+
+export async function getLinks(
+  db: D1Database,
+  opts: GetLinksOptions = {}
+): Promise<Link[]> {
+  const conditions: string[] = [];
+  const bindings: unknown[] = [];
+
+  if (!opts.includePrivate) {
+    conditions.push('private = 0');
+  }
+  if (opts.category) {
+    conditions.push('category = ?');
+    bindings.push(opts.category);
+  }
+  if (opts.status) {
+    conditions.push('status = ?');
+    bindings.push(opts.status);
+  }
+
+  const where = conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '';
+  const sql = 'SELECT * FROM links' + where + ' ORDER BY saved_at DESC';
+
+  const stmt = db.prepare(sql);
+  const result = bindings.length > 0
+    ? await stmt.bind(...bindings).all<Link>()
+    : await stmt.all<Link>();
+
+  return result.results;
+}
+
+export async function getLinkById(
+  db: D1Database,
+  id: string
+): Promise<Link | null> {
+  const result = await db
+    .prepare('SELECT * FROM links WHERE id = ?')
+    .bind(id)
+    .first<Link>();
+  return result ?? null;
+}
+
+export async function createLink(
+  db: D1Database,
+  data: Omit<Link, 'id' | 'saved_at' | 'read'>
+): Promise<Link> {
+  const id = Date.now().toString(36);
+  const savedAt = new Date().toISOString();
+  const read = data.status === 'done' ? 1 : 0;
+
+  await db
+    .prepare(
+      `INSERT INTO links (id, url, title, description, image, favicon, domain, category, tags, stars, note, summary, status, read, private, saved_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .bind(
+      id,
+      data.url,
+      data.title ?? null,
+      data.description ?? null,
+      data.image ?? null,
+      data.favicon ?? null,
+      data.domain ?? null,
+      data.category ?? null,
+      data.tags ?? null,
+      data.stars ?? 0,
+      data.note ?? null,
+      data.summary ?? null,
+      data.status ?? null,
+      read,
+      data.private ?? 0,
+      savedAt
+    )
+    .run();
+
+  return { id, ...data, read, saved_at: savedAt } as Link;
+}
+
+export async function updateLink(
+  db: D1Database,
+  id: string,
+  data: Partial<Omit<Link, 'id' | 'saved_at'>>
+): Promise<Link | null> {
+  const existing = await getLinkById(db, id);
+  if (!existing) return null;
+
+  const merged = { ...existing, ...data };
+  // Keep read in sync with status
+  merged.read = merged.status === 'done' ? 1 : 0;
+
+  await db
+    .prepare(
+      `UPDATE links SET url = ?, title = ?, description = ?, image = ?, favicon = ?, domain = ?, category = ?, tags = ?, stars = ?, note = ?, summary = ?, status = ?, read = ?, private = ?
+       WHERE id = ?`
+    )
+    .bind(
+      merged.url,
+      merged.title,
+      merged.description,
+      merged.image,
+      merged.favicon,
+      merged.domain,
+      merged.category,
+      merged.tags,
+      merged.stars,
+      merged.note,
+      merged.summary,
+      merged.status,
+      merged.read,
+      merged.private,
+      id
+    )
+    .run();
+
+  return merged;
+}
+
+export async function deleteLink(
+  db: D1Database,
+  id: string
+): Promise<boolean> {
+  const result = await db
+    .prepare('DELETE FROM links WHERE id = ?')
+    .bind(id)
+    .run();
+  return result.meta.changes > 0;
+}
+
+// --- Category queries ---
+
+export async function getCategories(
+  db: D1Database
+): Promise<Category[]> {
+  const result = await db
+    .prepare('SELECT name, sort_order FROM categories ORDER BY sort_order ASC')
+    .all<Category>();
+  return result.results;
 }
