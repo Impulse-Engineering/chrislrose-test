@@ -5,26 +5,26 @@
 See: .paul/PROJECT.md (updated 2026-03-23)
 
 **Core value:** A personal web presence that showcases who Chris is and helps him organize, curate, and share his reading list.
-**Current focus:** Phase 1 complete, ready to plan Phase 2 (Database & Auth)
+**Current focus:** Phase 2 complete, ready to plan Phase 3 (Static Pages)
 
 ## Current Position
 
 Milestone: v0.1 Initial Release
-Phase: 2 of 8 (Database & Auth)
+Phase: 3 of 8 (Static Pages)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-03-24 — Phase 1 complete, transitioned to Phase 2
+Last activity: 2026-03-24 — Phase 2 complete, transitioned to Phase 3
 
 Progress:
-- Milestone: [█░░░░░░░░░] 12%
-- Phase 1: [██████████] 100% Complete
+- Milestone: [██░░░░░░░░] 25%
+- Phase 2: [██████████] 100% Complete
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ○        ○        ○     [Ready for first PLAN of Phase 2]
+  ○        ○        ○     [Ready for first PLAN of Phase 3]
 ```
 
 ## Accumulated Context
@@ -46,13 +46,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Phase 1 complete, transitioned to Phase 2
-Next action: Merge feature/01-foundation to main, then /paul:plan for Phase 2
+Stopped at: Phase 2 complete, transitioned to Phase 3
+Next action: /paul:plan for Phase 3 (Static Pages)
 Resume file: .paul/ROADMAP.md
 Resume context:
-- Feature branch feature/01-foundation ready to merge (21 files, 6875 insertions, no conflicts)
-- Phase 1 SUMMARY at .paul/phases/01-foundation/01-01-SUMMARY.md
-- Worktree at .worktrees/01-foundation needs cleanup after merge
+- Phase 2 merged to main, all auth infrastructure in place
+- D1 schema, PBKDF2 auth, sessions, middleware, auth API all working
+- Phase 3 covers: Layout/Nav/Footer, CSS, server-rendered pages (about, contact, uses), gear API
 
 ---
 *STATE.md — Updated after every significant action*
