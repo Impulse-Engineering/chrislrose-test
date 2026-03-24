@@ -69,6 +69,7 @@ export const Layout: FC<LayoutProps> = ({
         <Nav currentPath={currentPath} />
         <main>{children}</main>
         <Footer />
+        <script src={`/cursor.js?v=${assetVersion}`} defer></script>
         {bodyExtra}
       </body>
     </html>

@@ -27,7 +27,6 @@ pages.get('/', (c) => {
     <>
       <script src={`/intro.js?v=${v}`} defer></script>
       <script src={`/particles.js?v=${v}`} defer></script>
-      <script src={`/cursor.js?v=${v}`} defer></script>
     </>
   );
 
