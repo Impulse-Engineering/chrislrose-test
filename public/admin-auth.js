@@ -35,7 +35,7 @@
       })
       .then(function (result) {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Sign In';
+        submitBtn.textContent = 'Sign in';
 
         if (!result.ok) {
           showError(result.data.error || 'Invalid credentials');
@@ -49,18 +49,17 @@
       })
       .catch(function () {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Sign In';
+        submitBtn.textContent = 'Sign in';
         showError('Network error. Please try again.');
       });
   });
 
   function showError(msg) {
     errorEl.textContent = msg;
-    errorEl.hidden = false;
+    errorEl.style.color = '#f85149';
   }
 
   function hideError() {
     errorEl.textContent = '';
-    errorEl.hidden = true;
   }
 })();

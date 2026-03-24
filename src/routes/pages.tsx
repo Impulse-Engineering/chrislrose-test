@@ -1050,30 +1050,28 @@ pages.get('/login', (c) => {
       currentPath="/login"
       bodyExtra={loginBody}
     >
-      <section class="section" style="min-height: 60vh; display: flex; align-items: center; justify-content: center;">
-        <div class="login-card">
-          <div class="login-header">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            <h2 style="margin: 0.75rem 0 0.25rem;">Admin Login</h2>
-            <p style="color: var(--muted); font-size: 0.875rem; margin: 0;">Sign in to manage content</p>
+      <section class="section" style="padding-bottom:1rem;">
+        <div class="container">
+          <div class="section-header anim-fade-up">
+            <span class="section-eyebrow">// admin</span>
+            <h2>Admin Login</h2>
+            <p>Sign in to manage your site content.</p>
           </div>
-          <form id="login-form" autocomplete="on">
-            <input type="hidden" id="login-redirect" value={redirect} />
-            <div class="login-field">
-              <label for="login-email">Email</label>
-              <input type="email" id="login-email" name="email" autocomplete="email" required placeholder="admin@example.com" />
-            </div>
-            <div class="login-field">
-              <label for="login-password">Password</label>
-              <input type="password" id="login-password" name="password" autocomplete="current-password" required placeholder="••••••••" />
-            </div>
-            <div id="login-error" class="login-error" hidden></div>
-            <button type="submit" class="btn btn-primary login-submit" id="login-submit">
-              Sign In
-            </button>
-          </form>
+          <div class="card anim-fade-up" style="max-width:420px;">
+            <form id="login-form" autocomplete="on">
+              <input type="hidden" id="login-redirect" value={redirect} />
+              <div class="form-group">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" placeholder="you@example.com" autocomplete="username" />
+              </div>
+              <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" />
+              </div>
+              <div id="login-error" style="font-size:0.8rem;color:#f85149;min-height:1.2em;margin-bottom:0.75rem;"></div>
+              <button type="submit" class="btn btn-primary" id="login-submit" style="width:100%;">Sign in</button>
+            </form>
+          </div>
         </div>
       </section>
     </Layout>
