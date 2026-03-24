@@ -661,18 +661,141 @@ pages.get('/contact', (c) => {
 });
 
 pages.get('/uses', (c) => {
+  const v = c.env.ASSET_VERSION;
+
+  const usesHead = (
+    <>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    </>
+  );
+
+  const usesBody = (
+    <>
+      <script src={`/animations.js?v=${v}`} defer></script>
+      <script src={`/uses.js?v=${v}`} defer></script>
+    </>
+  );
+
   return c.html(
     <Layout
-      title="My Gear"
-      description="Hardware, software, and tools Chris Rose uses."
+      title="My Gear — Chris Rose"
+      description="The hardware, software, and tools Chris Rose uses day-to-day as a technology executive."
       siteUrl={c.env.SITE_URL}
-      assetVersion={c.env.ASSET_VERSION}
+      assetVersion={v}
       currentPath="/uses"
+      headExtra={usesHead}
+      bodyExtra={usesBody}
     >
-      <div class="container" style="padding: 4rem 0;">
-        <h1>My Gear</h1>
-        <p style="color: var(--color-text-muted);">Coming in Phase 3.</p>
+      {/* Page Header */}
+      <section class="page-hero">
+        <div class="container">
+          <div class="anim-fade-up">
+            <span class="section-eyebrow">// my gear</span>
+            <h1>My Gear</h1>
+            <p class="page-hero__sub">The hardware, software, and tools I rely on daily as a technology executive. Updated regularly.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Tab Bar */}
+      <div class="gear-tabs-wrap">
+        <div class="container">
+          <div class="gear-tabs-bar" role="tablist">
+            <button class="gear-tab active" data-tab="panel-hardware" role="tab" aria-selected="true">
+              <span class="gear-tab-icon">{'\u{1F5A5}'}</span>
+              <span class="gear-tab-label">Hardware</span>
+            </button>
+            <button class="gear-tab" data-tab="panel-software" role="tab" aria-selected="false">
+              <span class="gear-tab-icon">{'\u{1F4BB}'}</span>
+              <span class="gear-tab-label">Software</span>
+            </button>
+            <button class="gear-tab" data-tab="panel-projects" role="tab" aria-selected="false">
+              <span class="gear-tab-icon">{'\u{1F680}'}</span>
+              <span class="gear-tab-label">Projects</span>
+            </button>
+            <button class="gear-tab" data-tab="panel-podcasts" role="tab" aria-selected="false">
+              <span class="gear-tab-icon">{'\u{1F399}'}</span>
+              <span class="gear-tab-label">Podcasts</span>
+            </button>
+            <button class="gear-tab" data-tab="panel-hobbies" role="tab" aria-selected="false">
+              <span class="gear-tab-icon">{'\u{1F3AF}'}</span>
+              <span class="gear-tab-label">Hobbies</span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Hardware Panel */}
+      <section class="section gear-panel" id="panel-hardware">
+        <div class="container">
+          <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
+            <span class="section-eyebrow">// hardware</span>
+            <h2>Hardware</h2>
+          </div>
+          <div class="hardware-grid" id="hardware-grid">
+            <div class="hardware-card" style="opacity:0.4;">
+              <div class="hardware-photo-wrap"></div>
+              <div class="hardware-card-body"><h3 style="color:var(--color-text-dim);">Loading&hellip;</h3></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Software Panel */}
+      <section class="section gear-panel" id="panel-software" hidden>
+        <div class="container">
+          <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
+            <span class="section-eyebrow">// software</span>
+            <h2>Software &amp; Apps</h2>
+          </div>
+          <div class="grid-3" id="software-grid"></div>
+        </div>
+      </section>
+
+      {/* Projects Panel */}
+      <section class="section gear-panel" id="panel-projects" hidden>
+        <div class="container">
+          <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
+            <span class="section-eyebrow">// projects</span>
+            <h2>Projects</h2>
+          </div>
+          <div class="grid-3" id="projects-grid"></div>
+        </div>
+      </section>
+
+      {/* Podcasts Panel */}
+      <section class="section gear-panel" id="panel-podcasts" hidden>
+        <div class="container">
+          <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
+            <span class="section-eyebrow">// podcasts</span>
+            <h2>Favorite Podcasts</h2>
+          </div>
+          <div class="podcast-grid" id="podcasts-grid"></div>
+        </div>
+      </section>
+
+      {/* Hobbies Panel */}
+      <section class="section gear-panel" id="panel-hobbies" hidden>
+        <div class="container">
+          <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
+            <span class="section-eyebrow">// hobbies</span>
+            <h2>Other Hobbies</h2>
+          </div>
+          <div class="hardware-grid" id="hobbies-grid"></div>
+        </div>
+      </section>
+
+      {/* What I'm Doing Now */}
+      <section class="section" id="now-section" style="background: var(--color-bg-alt);">
+        <div class="container">
+          <div class="section-header anim-fade-up" style="margin-bottom:1.5rem;">
+            <span class="section-eyebrow">// now</span>
+            <h2>What I'm Doing Now</h2>
+          </div>
+          <div class="card anim-fade-up" id="now-content"></div>
+        </div>
+      </section>
     </Layout>
   );
 });
