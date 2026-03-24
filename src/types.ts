@@ -3,6 +3,8 @@ export interface Env {
   ASSETS: Fetcher;
   SITE_URL: string;
   ASSET_VERSION: string;
+  ADMIN_EMAIL?: string;
+  ADMIN_PASSWORD?: string;
 }
 
 export interface Link {
