@@ -801,19 +801,137 @@ pages.get('/uses', (c) => {
 });
 
 pages.get('/reading-list', (c) => {
+  const v = c.env.ASSET_VERSION;
+
+  const rlHead = (
+    <>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    </>
+  );
+
+  const rlBody = (
+    <script src={`/reading-list.js?v=${v}`} defer></script>
+  );
+
   return c.html(
     <Layout
       title="Reading List"
-      description="Curated articles and resources from Chris Rose."
+      description="Articles, essays, and links Chris Rose has found worth reading — on tech, leadership, cybersecurity, and more."
       siteUrl={c.env.SITE_URL}
-      assetVersion={c.env.ASSET_VERSION}
+      assetVersion={v}
       ogImage="/og-reading-list.png"
       currentPath="/reading-list"
+      headExtra={rlHead}
+      bodyExtra={rlBody}
     >
-      <div class="container" style="padding: 4rem 0;">
-        <h1>Reading List</h1>
-        <p style="color: var(--color-text-muted);">Coming in Phase 4.</p>
+      {/* Page Hero */}
+      <section class="section" style="padding-bottom: 1rem;">
+        <div class="container">
+          <div class="section-header anim-fade-up">
+            <span class="section-eyebrow">// reading list</span>
+            <h2>Reading List</h2>
+            <p>Articles, essays, and links I've found worth saving — on technology, Apple, AI, leadership, cybersecurity, design, and whatever else caught my attention.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Filter Bar (sticky) */}
+      <div class="filter-bar">
+        {/* Row 1: Search + controls */}
+        <div class="filter-bar-row1">
+          <input
+            type="search"
+            class="filter-search"
+            id="filter-search"
+            placeholder="Search articles, notes, tags…"
+            aria-label="Search links"
+            autocomplete="off"
+          />
+          <select id="filter-status" class="filter-control" aria-label="Filter by status">
+            <option value="all">All statuses</option>
+            <option value="to-read">📖 To Read</option>
+            <option value="to-try">⚡ To Try</option>
+            <option value="to-share">💌 To Share</option>
+            <option value="done">✓ Done</option>
+          </select>
+          <select id="filter-sort" class="filter-control" aria-label="Sort order">
+            <option value="newest">Newest</option>
+            <option value="stars">Top Rated</option>
+          </select>
+          <button class="filter-icon-btn" id="filter-view-btn" title="Switch to compact view" aria-label="Toggle view">
+            <svg id="filter-view-icon-grid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+            <svg id="filter-view-icon-list" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+            </svg>
+          </button>
+          <button class="filter-icon-btn" id="filter-shuffle-btn" title="Surprise me — random link" aria-label="Random link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" />
+              <polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" />
+            </svg>
+          </button>
+          <button class="btn filter-curate-btn" id="filter-curate-btn" title="Curate a shareable collection" aria-label="Curate collection">
+            &#x2728; Curate
+          </button>
+          <button class="btn btn-primary admin-add-btn" id="admin-add-btn">
+            + Add Link
+          </button>
+        </div>
+        {/* Row 2: Category chips (horizontally scrollable) */}
+        <div class="filter-bar-row2">
+          <div class="filter-tabs" id="filter-tabs">
+            {/* Populated by reading-list.js */}
+          </div>
+        </div>
       </div>
+
+      {/* Selection mode action bar (shown when curating) */}
+      <div id="selection-action-bar" hidden>
+        <span id="selection-count">0 links selected</span>
+        <input type="text" id="selection-recipient" placeholder="For… (e.g. Sarah)" autocomplete="off" style="max-width:140px;" />
+        <input type="text" id="selection-message" placeholder="Add a message (optional)…" autocomplete="off" />
+        <button class="btn btn-primary" id="selection-create-btn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">Create share link</button>
+        <button class="btn" id="selection-cancel-btn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">Cancel</button>
+      </div>
+
+      {/* Links Grid */}
+      <div class="container" style="padding-bottom: 5rem;">
+        {/* Collection banner (shown when viewing a shared collection URL) */}
+        <div id="collection-banner" hidden></div>
+        <div class="links-grid" id="links-grid">
+          {/* Skeletons shown on load; replaced by reading-list.js */}
+          <div class="link-card-skeleton">
+            <div class="link-card-skeleton-img"></div>
+            <div class="link-card-skeleton-body">
+              <div class="link-card-skeleton-line medium"></div>
+              <div class="link-card-skeleton-line short"></div>
+              <div class="link-card-skeleton-line medium"></div>
+            </div>
+          </div>
+          <div class="link-card-skeleton">
+            <div class="link-card-skeleton-img"></div>
+            <div class="link-card-skeleton-body">
+              <div class="link-card-skeleton-line medium"></div>
+              <div class="link-card-skeleton-line short"></div>
+              <div class="link-card-skeleton-line medium"></div>
+            </div>
+          </div>
+          <div class="link-card-skeleton">
+            <div class="link-card-skeleton-img"></div>
+            <div class="link-card-skeleton-body">
+              <div class="link-card-skeleton-line medium"></div>
+              <div class="link-card-skeleton-line short"></div>
+              <div class="link-card-skeleton-line medium"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toast notification */}
+      <div id="persist-toast" hidden></div>
     </Layout>
   );
 });
