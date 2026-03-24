@@ -1,0 +1,15 @@
+# Worktrees
+.worktrees/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment/secrets
+.dev.vars
+.env
+
+# OS files
+.DS_Store
