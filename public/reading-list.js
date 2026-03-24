@@ -34,6 +34,7 @@
     activeStatus:   'all',
     activeSort:     'newest',
     searchQuery:    '',
+    isAdmin:        false,
     selectionMode:  false,
     selectedIds:    new Set(),
     collectionId:   null,
@@ -62,6 +63,12 @@
     var selectionCancelBtn = document.getElementById('selection-cancel-btn');
     var collectionBannerEl = document.getElementById('collection-banner');
     var persistToast = document.getElementById('persist-toast');
+
+    // Admin DOM refs
+    var adminFab = document.getElementById('admin-fab');
+    var adminFabIconLock = document.getElementById('admin-fab-icon-lock');
+    var adminFabIconUnlock = document.getElementById('admin-fab-icon-unlock');
+    var adminAddBtn = document.getElementById('admin-add-btn');
 
     // ── Load data ───────────────────────────────────────────────
     function loadData() {
@@ -429,11 +436,29 @@
     function setLinkStatus(id, newStatus) {
       var link = state.allLinks.find(function (l) { return l.id === id; });
       if (!link) return;
+      var oldStatus = link.status;
+      var oldRead = link.read;
       link.status = newStatus || null;
       link.read   = (newStatus === 'done') ? 1 : 0;
       applyFilters();
-      // TODO Phase 5: POST status update requires auth
-      // fetch('/api/links/' + id, { method: 'PATCH', headers: {...}, body: JSON.stringify({status, read}) })
+
+      if (!state.isAdmin) return;
+
+      fetch('/api/links/' + encodeURIComponent(id), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: link.status, read: link.read }),
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error('Status update failed');
+          showToast('Status updated', 'success');
+        })
+        .catch(function () {
+          link.status = oldStatus;
+          link.read = oldRead;
+          applyFilters();
+          showToast('Failed to update status', 'error');
+        });
     }
 
     // ── Build card ──────────────────────────────────────────────
@@ -631,6 +656,37 @@
 
       card.appendChild(rightDiv);
 
+      // Admin actions (edit + delete — visible only in admin-mode via CSS)
+      var adminActions = document.createElement('div');
+      adminActions.className = 'card-admin-actions';
+
+      var editBtn = document.createElement('button');
+      editBtn.className = 'card-admin-action-edit';
+      editBtn.title = 'Edit link';
+      editBtn.setAttribute('aria-label', 'Edit link');
+      editBtn.textContent = '\u270E';
+      editBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // TODO Plan 05-02: Open edit modal
+        showToast('Edit modal coming in next update', 'info');
+      });
+
+      var delBtn = document.createElement('button');
+      delBtn.className = 'card-admin-action-delete';
+      delBtn.title = 'Delete link';
+      delBtn.setAttribute('aria-label', 'Delete link');
+      delBtn.textContent = '\u2716';
+      delBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteLink(link.id, link.title || link.url);
+      });
+
+      adminActions.appendChild(editBtn);
+      adminActions.appendChild(delBtn);
+      card.appendChild(adminActions);
+
       // Event listeners
       copyBtn.addEventListener('click', function (e) {
         e.preventDefault();
@@ -752,8 +808,83 @@
       }, type === 'error' ? 6000 : 3000);
     }
 
+    // ── Admin Auth ──────────────────────────────────────────────
+
+    function checkSession() {
+      fetch('/api/auth/session')
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.authenticated) {
+            enterAdminMode();
+          }
+        })
+        .catch(function () { /* not authenticated — stay public */ });
+    }
+
+    function enterAdminMode() {
+      state.isAdmin = true;
+      document.body.classList.add('admin-mode');
+      if (adminFabIconLock) adminFabIconLock.style.display = 'none';
+      if (adminFabIconUnlock) adminFabIconUnlock.style.display = '';
+      if (adminFab) adminFab.classList.add('unlocked');
+    }
+
+    function exitAdminMode() {
+      state.isAdmin = false;
+      document.body.classList.remove('admin-mode');
+      if (adminFabIconLock) adminFabIconLock.style.display = '';
+      if (adminFabIconUnlock) adminFabIconUnlock.style.display = 'none';
+      if (adminFab) adminFab.classList.remove('unlocked');
+    }
+
+    function deleteLink(id, title) {
+      if (!state.isAdmin) return;
+      var label = title ? '"' + title + '"' : 'this link';
+      if (!confirm('Delete ' + label + '?')) return;
+
+      fetch('/api/links/' + encodeURIComponent(id), { method: 'DELETE' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('Delete failed');
+          state.allLinks = state.allLinks.filter(function (l) { return l.id !== id; });
+          applyFilters();
+          showToast('Link deleted', 'success');
+        })
+        .catch(function () {
+          showToast('Failed to delete link', 'error');
+        });
+    }
+
+    // FAB click handler
+    if (adminFab) {
+      adminFab.addEventListener('click', function () {
+        if (state.isAdmin) {
+          // Logout
+          fetch('/api/auth/logout', { method: 'POST' })
+            .then(function () {
+              exitAdminMode();
+              showToast('Logged out', 'info');
+            })
+            .catch(function () {
+              showToast('Logout failed', 'error');
+            });
+        } else {
+          // Navigate to login
+          window.location.href = '/login?redirect=/reading-list';
+        }
+      });
+    }
+
+    // Add link button (stub for Plan 05-02)
+    if (adminAddBtn) {
+      adminAddBtn.addEventListener('click', function () {
+        // TODO Plan 05-02: Open add link modal
+        showToast('Add link modal coming in next update', 'info');
+      });
+    }
+
     // ── Init ─────────────────────────────────────────────────────
     loadData();
+    checkSession();
 
   }); // end DOMContentLoaded
 
