@@ -10,11 +10,13 @@ import { contentRoutes } from './routes/api/content';
 import { collectionRoutes } from './routes/api/collections';
 import { requireAuth } from './middleware/auth';
 import { seedAdminIfNeeded } from './lib/seed-admin';
+import { ensureSchema } from './lib/ensure-schema';
 
 const app = new Hono<{ Bindings: Env }>();
 
-// Auto-seed admin from env vars if admin_users table is empty
+// Auto-initialize: ensure D1 schema exists, then seed admin if needed
 app.use('*', async (c, next) => {
+  await ensureSchema(c.env.DB);
   await seedAdminIfNeeded(c.env.DB, c.env.ADMIN_EMAIL, c.env.ADMIN_PASSWORD);
   await next();
 });
