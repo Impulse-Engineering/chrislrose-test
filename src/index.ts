@@ -5,6 +5,8 @@ import { authRoutes } from './routes/api/auth';
 import { gearRoutes } from './routes/api/gear';
 import { linkRoutes } from './routes/api/links';
 import { categoryRoutes } from './routes/api/categories';
+import { metaRoutes } from './routes/api/meta';
+import { contentRoutes } from './routes/api/content';
 import { requireAuth } from './middleware/auth';
 import { seedAdminIfNeeded } from './lib/seed-admin';
 
@@ -27,6 +29,12 @@ app.route('/api/links', linkRoutes);
 
 // Categories routes (public — no auth required)
 app.route('/api/categories', categoryRoutes);
+
+// Meta routes (public — metadata fetch for link add)
+app.route('/api/meta', metaRoutes);
+
+// Content routes (GET/PUT have inline requireAuth)
+app.route('/api/content', contentRoutes);
 
 // Protected API routes (middleware applied to all /api/* except routes above)
 app.use('/api/*', requireAuth);

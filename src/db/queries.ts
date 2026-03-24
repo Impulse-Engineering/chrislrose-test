@@ -260,3 +260,121 @@ export async function getSiteContent(
     .first<SiteContent>();
   return result ?? null;
 }
+
+// --- Gear write queries ---
+
+const ALLOWED_GEAR_TABLES = ['hardware', 'software', 'hobbies', 'projects', 'podcasts'] as const;
+type GearTable = (typeof ALLOWED_GEAR_TABLES)[number];
+
+function validateGearTable(table: string): table is GearTable {
+  return ALLOWED_GEAR_TABLES.includes(table as GearTable);
+}
+
+export async function createGearItem(
+  db: D1Database,
+  table: string,
+  data: Record<string, unknown>
+): Promise<GearItem | null> {
+  if (!validateGearTable(table)) return null;
+  const tableName = `gear_${table}`;
+
+  const keys = Object.keys(data);
+  const placeholders = keys.map(() => '?').join(', ');
+  const values = keys.map((k) => data[k]);
+
+  const result = await db
+    .prepare(`INSERT INTO ${tableName} (${keys.join(', ')}) VALUES (${placeholders})`)
+    .bind(...values)
+    .run();
+
+  if (result.meta.changes === 0) return null;
+
+  return db
+    .prepare(`SELECT * FROM ${tableName} WHERE id = ?`)
+    .bind(data.id)
+    .first<GearItem>();
+}
+
+export async function updateGearItem(
+  db: D1Database,
+  table: string,
+  id: string,
+  data: Record<string, unknown>
+): Promise<GearItem | null> {
+  if (!validateGearTable(table)) return null;
+  const tableName = `gear_${table}`;
+
+  const keys = Object.keys(data).filter((k) => k !== 'id');
+  if (keys.length === 0) return null;
+  const setClauses = keys.map((k) => `${k} = ?`).join(', ');
+  const values = keys.map((k) => data[k]);
+
+  const result = await db
+    .prepare(`UPDATE ${tableName} SET ${setClauses} WHERE id = ?`)
+    .bind(...values, id)
+    .run();
+
+  if (result.meta.changes === 0) return null;
+
+  return db
+    .prepare(`SELECT * FROM ${tableName} WHERE id = ?`)
+    .bind(id)
+    .first<GearItem>();
+}
+
+export async function deleteGearItem(
+  db: D1Database,
+  table: string,
+  id: string
+): Promise<boolean> {
+  if (!validateGearTable(table)) return false;
+  const tableName = `gear_${table}`;
+
+  const result = await db
+    .prepare(`DELETE FROM ${tableName} WHERE id = ?`)
+    .bind(id)
+    .run();
+  return result.meta.changes > 0;
+}
+
+// --- Category write queries ---
+
+export async function replaceCategories(
+  db: D1Database,
+  categories: { name: string; sort_order: number }[]
+): Promise<void> {
+  await db.prepare('DELETE FROM categories').run();
+  for (const cat of categories) {
+    await db
+      .prepare('INSERT INTO categories (name, sort_order) VALUES (?, ?)')
+      .bind(cat.name, cat.sort_order)
+      .run();
+  }
+}
+
+// --- Site content write queries ---
+
+export async function updateSiteContent(
+  db: D1Database,
+  id: string,
+  content: string
+): Promise<SiteContent | null> {
+  const now = new Date().toISOString();
+  // Upsert: try update first, then insert if not exists
+  const updateResult = await db
+    .prepare('UPDATE site_content SET content = ?, updated_at = ? WHERE id = ?')
+    .bind(content, now, id)
+    .run();
+
+  if (updateResult.meta.changes === 0) {
+    await db
+      .prepare('INSERT INTO site_content (id, content, updated_at) VALUES (?, ?, ?)')
+      .bind(id, content, now)
+      .run();
+  }
+
+  return db
+    .prepare('SELECT * FROM site_content WHERE id = ?')
+    .bind(id)
+    .first<SiteContent>();
+}

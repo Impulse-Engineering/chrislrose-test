@@ -38,7 +38,9 @@
     selectionMode:  false,
     selectedIds:    new Set(),
     collectionId:   null,
-    collectionData: null
+    collectionData: null,
+    editingId:      null,
+    starValue:      3
   };
 
   // ── Boot ──────────────────────────────────────────────────────
@@ -69,6 +71,25 @@
     var adminFabIconLock = document.getElementById('admin-fab-icon-lock');
     var adminFabIconUnlock = document.getElementById('admin-fab-icon-unlock');
     var adminAddBtn = document.getElementById('admin-add-btn');
+
+    // Modal DOM refs
+    var linkModal      = document.getElementById('link-modal');
+    var linkBackdrop   = document.getElementById('link-modal-backdrop');
+    var linkModalClose = document.getElementById('link-modal-close');
+    var linkModalTitle = document.getElementById('link-modal-title');
+    var linkEditId     = document.getElementById('link-edit-id');
+    var linkUrl        = document.getElementById('link-url');
+    var ogStatus       = document.getElementById('og-fetch-status');
+    var linkTitle      = document.getElementById('link-title');
+    var linkDesc       = document.getElementById('link-description');
+    var linkNote       = document.getElementById('link-note');
+    var linkStatus     = document.getElementById('link-status');
+    var linkTags       = document.getElementById('link-tags');
+    var linkCategory   = document.getElementById('link-category');
+    var starPicker     = document.getElementById('star-picker');
+    var linkPrivate    = document.getElementById('link-private');
+    var linkSaveStatus = document.getElementById('link-save-status');
+    var linkModalSave  = document.getElementById('link-modal-save');
 
     // ── Load data ───────────────────────────────────────────────
     function loadData() {
@@ -668,8 +689,7 @@
       editBtn.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        // TODO Plan 05-02: Open edit modal
-        showToast('Edit modal coming in next update', 'info');
+        openEditModal(link.id);
       });
 
       var delBtn = document.createElement('button');
@@ -874,12 +894,264 @@
       });
     }
 
-    // Add link button (stub for Plan 05-02)
+    // Add link button
     if (adminAddBtn) {
       adminAddBtn.addEventListener('click', function () {
-        // TODO Plan 05-02: Open add link modal
-        showToast('Add link modal coming in next update', 'info');
+        openAddModal(null);
       });
+    }
+
+    // ── Add / Edit modal ─────────────────────────────────────────
+    var ogTimer = null;
+
+    function openAddModal(prefillUrl) {
+      state.editingId = null;
+      linkModalTitle.textContent = 'Add Link';
+      linkEditId.value = '';
+      linkUrl.value    = prefillUrl || '';
+      linkTitle.value  = '';
+      linkTitle.dataset.ogImage = '';
+      linkTitle.dataset.domain  = '';
+      linkTitle.dataset.favicon = '';
+      linkDesc.value   = '';
+      linkNote.value   = '';
+      linkPrivate.checked = false;
+      linkStatus.value = '';
+      linkTags.value   = '';
+      linkSaveStatus.textContent = '';
+      ogStatus.textContent = '';
+      state.starValue = 3;
+      updateStarPicker(3);
+      buildCategorySelect();
+      linkModal.removeAttribute('hidden');
+      setTimeout(function () { linkUrl.focus(); }, 40);
+      if (prefillUrl) { fetchMeta(prefillUrl); }
+    }
+
+    function openEditModal(id) {
+      var link = state.allLinks.find(function (l) { return l.id === id; });
+      if (!link) return;
+      state.editingId = id;
+      linkModalTitle.textContent = 'Edit Link';
+      linkEditId.value = id;
+      linkUrl.value    = link.url         || '';
+      linkTitle.value  = link.title       || '';
+      linkTitle.dataset.ogImage = link.image   || '';
+      linkTitle.dataset.domain  = link.domain  || '';
+      linkTitle.dataset.favicon = link.favicon || '';
+      linkDesc.value    = link.description || '';
+      linkNote.value    = link.note        || '';
+      linkStatus.value  = link.status      || '';
+      linkTags.value    = link.tags        || '';
+      linkPrivate.checked = !!link.private;
+      linkSaveStatus.textContent = '';
+      ogStatus.textContent = '';
+      state.starValue = link.stars || 3;
+      updateStarPicker(link.stars || 3);
+      buildCategorySelect();
+      linkCategory.value = link.category || '';
+      linkModal.removeAttribute('hidden');
+      setTimeout(function () { linkTitle.focus(); }, 40);
+    }
+
+    function closeLinkModal() {
+      linkModal.setAttribute('hidden', '');
+      state.editingId = null;
+      linkModalSave.disabled = false;
+    }
+
+    if (linkModalClose) linkModalClose.addEventListener('click', closeLinkModal);
+    if (linkBackdrop) linkBackdrop.addEventListener('click', closeLinkModal);
+
+    function buildCategorySelect() {
+      while (linkCategory.firstChild) { linkCategory.removeChild(linkCategory.firstChild); }
+      var emptyOpt = document.createElement('option');
+      emptyOpt.value = '';
+      emptyOpt.textContent = '— No category —';
+      linkCategory.appendChild(emptyOpt);
+      state.categories.forEach(function (cat) {
+        var opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        linkCategory.appendChild(opt);
+      });
+    }
+
+    // ── Star picker ──────────────────────────────────────────────
+    function updateStarPicker(val) {
+      if (!starPicker) return;
+      var stars = starPicker.querySelectorAll('.star');
+      for (var i = 0; i < stars.length; i++) {
+        if (i < val) {
+          stars[i].classList.add('filled');
+        } else {
+          stars[i].classList.remove('filled');
+        }
+        stars[i].classList.remove('hover');
+      }
+    }
+
+    if (starPicker) {
+      var starEls = starPicker.querySelectorAll('.star');
+      for (var si = 0; si < starEls.length; si++) {
+        (function (idx) {
+          starEls[idx].addEventListener('mouseenter', function () {
+            for (var j = 0; j < starEls.length; j++) {
+              if (j <= idx) { starEls[j].classList.add('hover'); }
+              else { starEls[j].classList.remove('hover'); }
+            }
+          });
+          starEls[idx].addEventListener('mouseleave', function () {
+            for (var j = 0; j < starEls.length; j++) { starEls[j].classList.remove('hover'); }
+          });
+          starEls[idx].addEventListener('click', function () {
+            state.starValue = idx + 1;
+            updateStarPicker(idx + 1);
+          });
+          starEls[idx].addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              state.starValue = idx + 1;
+              updateStarPicker(idx + 1);
+            }
+          });
+        })(si);
+      }
+    }
+
+    // ── Metadata fetch ───────────────────────────────────────────
+    if (linkUrl) {
+      linkUrl.addEventListener('input', function () {
+        var url = linkUrl.value.trim();
+        if (ogTimer) clearTimeout(ogTimer);
+        if (!url || url.length < 10) return;
+        ogTimer = setTimeout(function () { fetchMeta(url); }, 700);
+      });
+    }
+
+    function fetchMeta(url) {
+      ogStatus.textContent = 'Fetching metadata\u2026';
+      fetch('/api/meta?url=' + encodeURIComponent(url))
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          if (data.title && !linkTitle.value) linkTitle.value = data.title;
+          if (data.description && !linkDesc.value) linkDesc.value = data.description;
+          if (data.image) linkTitle.dataset.ogImage = data.image;
+          if (data.domain) linkTitle.dataset.domain = data.domain;
+          if (data.favicon) linkTitle.dataset.favicon = data.favicon;
+          ogStatus.textContent = 'Metadata loaded.';
+          setTimeout(function () { ogStatus.textContent = ''; }, 2500);
+        })
+        .catch(function () {
+          ogStatus.textContent = 'Could not fetch metadata \u2014 fill in manually.';
+        });
+    }
+
+    // ── Save link ────────────────────────────────────────────────
+    if (linkModalSave) linkModalSave.addEventListener('click', saveLink);
+
+    function generateId(url) {
+      // Simple hash-like ID from URL + timestamp
+      var hash = 0;
+      var str = url + Date.now();
+      for (var i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return 'lnk_' + Math.abs(hash).toString(36) + '_' + Date.now().toString(36);
+    }
+
+    function saveLink() {
+      var url = linkUrl.value.trim();
+      if (!url) {
+        linkSaveStatus.style.color = '#f85149';
+        linkSaveStatus.textContent = 'URL is required.';
+        return;
+      }
+
+      var domain  = linkTitle.dataset.domain  || '';
+      var favicon = linkTitle.dataset.favicon || '';
+      var image   = linkTitle.dataset.ogImage || '';
+
+      if (!domain) {
+        try {
+          domain  = new URL(url).hostname.replace(/^www\./, '');
+          favicon = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=64';
+        } catch (e) {}
+      }
+
+      var isEdit = !!state.editingId;
+      var now    = new Date().toISOString();
+      var orig   = isEdit ? state.allLinks.find(function (l) { return l.id === state.editingId; }) : null;
+
+      var entryStatus = linkStatus.value || null;
+      var entry = {
+        id:          isEdit ? state.editingId : generateId(url),
+        url:         url,
+        title:       linkTitle.value.trim() || 'Untitled',
+        description: linkDesc.value.trim(),
+        image:       image,
+        favicon:     favicon,
+        domain:      domain,
+        category:    linkCategory.value || null,
+        stars:       state.starValue,
+        note:        linkNote.value.trim(),
+        status:      entryStatus,
+        tags:        linkTags.value.trim() || null,
+        read:        entryStatus === 'done' ? 1 : 0,
+        private:     linkPrivate.checked ? 1 : 0,
+        saved_at:    isEdit && orig ? orig.saved_at : now
+      };
+
+      linkSaveStatus.style.color = 'var(--muted)';
+      linkSaveStatus.textContent = 'Saving\u2026';
+      linkModalSave.disabled = true;
+
+      // Optimistic update
+      if (isEdit) {
+        var idx = state.allLinks.findIndex(function (l) { return l.id === state.editingId; });
+        if (idx !== -1) { state.allLinks[idx] = entry; }
+      } else {
+        state.allLinks.unshift(entry);
+      }
+      applyFilters();
+      closeLinkModal();
+
+      var apiUrl = isEdit ? '/api/links/' + encodeURIComponent(state.editingId) : '/api/links';
+      var method = isEdit ? 'PUT' : 'POST';
+
+      fetch(apiUrl, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
+      })
+        .then(function (res) {
+          if (!res.ok) return res.json().then(function (d) { throw new Error(d.error || 'Save failed'); });
+          return res.json();
+        })
+        .then(function (saved) {
+          // Update with server-returned data (may have server-generated id for new links)
+          if (!isEdit && saved && saved.id) {
+            var i = state.allLinks.findIndex(function (l) { return l.id === entry.id; });
+            if (i !== -1) { state.allLinks[i] = saved; }
+            applyFilters();
+          }
+          showToast('\u2713 Saved', 'success');
+        })
+        .catch(function (err) {
+          // Rollback
+          if (isEdit && orig) {
+            var ri = state.allLinks.findIndex(function (l) { return l.id === state.editingId; });
+            if (ri !== -1) { state.allLinks[ri] = orig; }
+          } else {
+            state.allLinks = state.allLinks.filter(function (l) { return l.id !== entry.id; });
+          }
+          applyFilters();
+          showToast('\u2717 Save failed: ' + err.message, 'error');
+        });
     }
 
     // ── Init ─────────────────────────────────────────────────────

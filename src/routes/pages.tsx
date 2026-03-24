@@ -933,6 +933,69 @@ pages.get('/reading-list', (c) => {
       {/* Toast notification */}
       <div id="persist-toast" hidden></div>
 
+      {/* Link add/edit modal */}
+      <div class="rl-modal" id="link-modal" hidden>
+        <div class="rl-modal-backdrop" id="link-modal-backdrop"></div>
+        <div class="rl-modal-inner">
+          <button class="rl-modal-close" id="link-modal-close" aria-label="Close">&times;</button>
+          <p class="rl-modal-title" id="link-modal-title">Add Link</p>
+          <input type="hidden" id="link-edit-id" value="" />
+
+          <div class="form-group">
+            <label for="link-url">URL</label>
+            <input type="url" id="link-url" placeholder="https://…" autocomplete="off" />
+          </div>
+          <div id="og-fetch-status" style="font-size:0.75rem;color:var(--muted);min-height:1em;margin-top:-0.5rem;margin-bottom:0.75rem;"></div>
+
+          <div class="form-group">
+            <label for="link-title">Title</label>
+            <input type="text" id="link-title" placeholder="Article title" />
+          </div>
+          <div class="form-group">
+            <label for="link-description">Description</label>
+            <textarea id="link-description" style="min-height:80px;" placeholder="Short description…"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="link-note">Your Note <span style="font-weight:400;color:var(--muted);font-size:0.8rem;">(visible to visitors)</span></label>
+            <textarea id="link-note" style="min-height:60px;" placeholder="Why I saved this…"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="link-status">Status</label>
+            <select id="link-status" class="filter-control" style="width:100%;padding:0.65rem 0.9rem;">
+              <option value="">— No status —</option>
+              <option value="to-read">To Read</option>
+              <option value="to-try">To Try</option>
+              <option value="to-share">To Share</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="link-category">Category</label>
+            <select id="link-category" class="filter-control" style="width:100%;padding:0.65rem 0.9rem;"></select>
+          </div>
+          <div class="form-group">
+            <label for="link-tags">Tags <span style="font-weight:400;color:var(--muted);font-size:0.8rem;">(comma separated)</span></label>
+            <input type="text" id="link-tags" placeholder="e.g. ai, claude, tools" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label>Rating</label>
+            <div class="star-picker" id="star-picker" role="radiogroup" aria-label="Rating">
+              <span class="star" data-value="1" role="radio" aria-label="1 star" tabindex={0}>&#9733;</span>
+              <span class="star" data-value="2" role="radio" aria-label="2 stars" tabindex={0}>&#9733;</span>
+              <span class="star" data-value="3" role="radio" aria-label="3 stars" tabindex={0}>&#9733;</span>
+              <span class="star" data-value="4" role="radio" aria-label="4 stars" tabindex={0}>&#9733;</span>
+              <span class="star" data-value="5" role="radio" aria-label="5 stars" tabindex={0}>&#9733;</span>
+            </div>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:0.75rem;flex-direction:row;">
+            <input type="checkbox" id="link-private" style="width:auto;margin:0;" />
+            <label for="link-private" style="text-transform:none;letter-spacing:0;font-size:0.875rem;margin:0;">Hide from public (private)</label>
+          </div>
+          <div id="link-save-status" style="font-size:0.8rem;min-height:1.2em;margin-bottom:0.5rem;"></div>
+          <button class="btn btn-primary" id="link-modal-save" style="width:100%;">Save Link</button>
+        </div>
+      </div>
+
       {/* Admin FAB */}
       <button class="admin-fab" id="admin-fab" title="Admin" aria-label="Admin login">
         <svg id="admin-fab-icon-lock" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -990,6 +1053,202 @@ pages.get('/login', (c) => {
           </form>
         </div>
       </section>
+    </Layout>
+  );
+});
+
+// ── Admin Dashboard ──────────────────────────────────────
+pages.get('/admin', (c) => {
+  const v = c.env.ASSET_VERSION;
+
+  const adminBody = (
+    <script src={`/admin.js?v=${v}`} defer></script>
+  );
+
+  return c.html(
+    <Layout
+      title="Admin — Chris Rose"
+      description="Admin dashboard"
+      siteUrl={c.env.SITE_URL}
+      assetVersion={v}
+      currentPath="/admin"
+      bodyExtra={adminBody}
+    >
+      <section class="section" style="padding-bottom:1rem;">
+        <div class="container">
+          <div class="section-header">
+            <span class="section-eyebrow">// admin</span>
+            <h2>Admin Dashboard</h2>
+          </div>
+
+          {/* Tabs */}
+          <div class="admin-tabs">
+            <button class="admin-tab active" data-tab="tab-reading-list">Reading List</button>
+            <button class="admin-tab" data-tab="tab-gear">My Gear</button>
+            <button class="admin-tab" data-tab="tab-now">Now</button>
+            <button class="btn" id="logout-btn" style="margin-left:auto;font-size:0.78rem;padding:0.3rem 0.8rem;color:var(--muted);">Sign out</button>
+          </div>
+
+          {/* Reading List Tab */}
+          <div class="admin-section active" id="tab-reading-list">
+            <div class="admin-subsection">
+              <h3 class="admin-subsection-title">Categories</h3>
+              <div id="cat-chips" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.75rem;min-height:1.5rem;"></div>
+              <div style="display:flex;gap:0.5rem;margin-bottom:0.4rem;">
+                <input id="cat-input" type="text" placeholder="New category…" autocomplete="off" style="flex:1;" />
+                <button class="btn" id="cat-add-btn" style="white-space:nowrap;padding:0.45rem 0.75rem;font-size:0.8rem;">Add</button>
+              </div>
+              <div id="cat-status" style="font-size:0.75rem;min-height:1.2em;"></div>
+            </div>
+            <div class="admin-subsection">
+              <a href="/reading-list" class="btn" style="font-size:0.8rem;">View Reading List &rarr;</a>
+            </div>
+          </div>
+
+          {/* My Gear Tab */}
+          <div class="admin-section" id="tab-gear">
+            <div class="admin-subsection">
+              <div class="admin-subsection-header">
+                <h3 class="admin-subsection-title">Hardware</h3>
+                <button class="btn btn-primary" id="add-hardware-btn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">+ Add Hardware</button>
+              </div>
+              <div id="hardware-list"></div>
+            </div>
+            <div class="admin-subsection">
+              <div class="admin-subsection-header">
+                <h3 class="admin-subsection-title">Software &amp; Apps</h3>
+                <button class="btn btn-primary" id="add-software-btn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">+ Add Software</button>
+              </div>
+              <div id="software-list"></div>
+            </div>
+            <div class="admin-subsection">
+              <div class="admin-subsection-header">
+                <h3 class="admin-subsection-title">Projects</h3>
+                <button class="btn btn-primary" id="add-project-btn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">+ Add Project</button>
+              </div>
+              <div id="projects-list"></div>
+            </div>
+            <div class="admin-subsection">
+              <div class="admin-subsection-header">
+                <h3 class="admin-subsection-title">Other Hobbies</h3>
+                <button class="btn btn-primary" id="add-hobby-btn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">+ Add Hobby</button>
+              </div>
+              <div id="hobbies-list"></div>
+            </div>
+            <div class="admin-subsection">
+              <div class="admin-subsection-header">
+                <h3 class="admin-subsection-title">Favorite Podcasts</h3>
+                <button class="btn btn-primary" id="add-podcast-btn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">+ Add Podcast</button>
+              </div>
+              <div id="podcasts-list"></div>
+            </div>
+            <div class="admin-subsection">
+              <a href="/uses" class="btn" style="font-size:0.8rem;">View My Gear page &rarr;</a>
+            </div>
+          </div>
+
+          {/* Now Tab */}
+          <div class="admin-section" id="tab-now">
+            <div class="admin-subsection">
+              <h3 class="admin-subsection-title">What I'm Doing Now</h3>
+              <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">This appears at the top of the My Gear page. Plain text, updated whenever you like. Leave it empty to hide the section entirely.</p>
+              <textarea
+                id="now-textarea"
+                rows={10}
+                placeholder="What are you working on right now? What are you excited about?"
+                style="width:100%;font-family:var(--font-sans);font-size:0.9rem;line-height:1.6;resize:vertical;"
+              ></textarea>
+              <div id="now-updated" style="font-family:var(--font-mono);font-size:0.72rem;color:var(--muted);margin-top:0.5rem;min-height:1.2em;"></div>
+              <div style="display:flex;align-items:center;gap:1rem;margin-top:0.75rem;">
+                <button class="btn btn-primary" id="now-save-btn" style="padding:0.45rem 1.25rem;">Save</button>
+                <span id="now-status" style="font-size:0.8rem;min-height:1.2em;"></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* Hardware modal */}
+      <div class="rl-modal" id="hw-modal" hidden>
+        <div class="rl-modal-backdrop" id="hw-modal-backdrop"></div>
+        <div class="rl-modal-inner">
+          <button class="rl-modal-close" id="hw-modal-close" aria-label="Close">&times;</button>
+          <p class="rl-modal-title" id="hw-modal-title">Add Hardware</p>
+          <div class="form-group"><label for="hw-name">Name</label><input type="text" id="hw-name" placeholder='e.g. Apple MacBook Pro 14"' autocomplete="off" /></div>
+          <div class="form-group"><label for="hw-badge">Badge</label><input type="text" id="hw-badge" placeholder="e.g. M4 chip" autocomplete="off" /></div>
+          <div class="form-group"><label for="hw-image">Image URL</label><input type="url" id="hw-image" placeholder="https://…" autocomplete="off" /></div>
+          <div class="form-group"><label for="hw-desc">Description</label><textarea id="hw-desc" placeholder="Why you use it…"></textarea></div>
+          <div id="hw-status" style="font-size:0.8rem;min-height:1.2em;margin-bottom:0.5rem;"></div>
+          <button class="btn btn-primary" id="hw-save-btn" style="width:100%;">Save</button>
+        </div>
+      </div>
+
+      {/* Software modal */}
+      <div class="rl-modal" id="sw-modal" hidden>
+        <div class="rl-modal-backdrop" id="sw-modal-backdrop"></div>
+        <div class="rl-modal-inner">
+          <button class="rl-modal-close" id="sw-modal-close" aria-label="Close">&times;</button>
+          <p class="rl-modal-title" id="sw-modal-title">Add Software</p>
+          <div class="form-group"><label for="sw-name">Name</label><input type="text" id="sw-name" placeholder="e.g. 1Password" autocomplete="off" /></div>
+          <div class="form-group"><label for="sw-badge">Badge</label><input type="text" id="sw-badge" placeholder="e.g. macOS" autocomplete="off" /></div>
+          <div class="form-group"><label for="sw-icon">Icon</label><input type="text" id="sw-icon" placeholder="e.g. 🔒" autocomplete="off" style="font-size:1.4rem;width:80px;" /></div>
+          <div class="form-group"><label for="sw-url">URL</label><input type="url" id="sw-url" placeholder="https://…" autocomplete="off" /></div>
+          <div class="form-group"><label for="sw-desc">Description</label><textarea id="sw-desc" placeholder="Why you use it…"></textarea></div>
+          <div id="sw-status" style="font-size:0.8rem;min-height:1.2em;margin-bottom:0.5rem;"></div>
+          <button class="btn btn-primary" id="sw-save-btn" style="width:100%;">Save</button>
+        </div>
+      </div>
+
+      {/* Hobby modal */}
+      <div class="rl-modal" id="hb-modal" hidden>
+        <div class="rl-modal-backdrop" id="hb-modal-backdrop"></div>
+        <div class="rl-modal-inner">
+          <button class="rl-modal-close" id="hb-modal-close" aria-label="Close">&times;</button>
+          <p class="rl-modal-title" id="hb-modal-title">Add Hobby</p>
+          <div class="form-group"><label for="hb-name">Name</label><input type="text" id="hb-name" placeholder="e.g. Photography" autocomplete="off" /></div>
+          <div class="form-group"><label for="hb-badge">Badge</label><input type="text" id="hb-badge" placeholder="e.g. Fujifilm" autocomplete="off" /></div>
+          <div class="form-group"><label for="hb-image">Image URL</label><input type="url" id="hb-image" placeholder="https://…" autocomplete="off" /></div>
+          <div class="form-group"><label for="hb-url">URL</label><input type="url" id="hb-url" placeholder="https://…" autocomplete="off" /></div>
+          <div class="form-group"><label for="hb-desc">Description</label><textarea id="hb-desc" placeholder="What you enjoy about it…"></textarea></div>
+          <div id="hb-status" style="font-size:0.8rem;min-height:1.2em;margin-bottom:0.5rem;"></div>
+          <button class="btn btn-primary" id="hb-save-btn" style="width:100%;">Save</button>
+        </div>
+      </div>
+
+      {/* Project modal */}
+      <div class="rl-modal" id="pr-modal" hidden>
+        <div class="rl-modal-backdrop" id="pr-modal-backdrop"></div>
+        <div class="rl-modal-inner">
+          <button class="rl-modal-close" id="pr-modal-close" aria-label="Close">&times;</button>
+          <p class="rl-modal-title" id="pr-modal-title">Add Project</p>
+          <div class="form-group"><label for="pr-name">Name</label><input type="text" id="pr-name" placeholder="e.g. Home Lab" autocomplete="off" /></div>
+          <div class="form-group"><label for="pr-badge">Badge</label><input type="text" id="pr-badge" placeholder="e.g. Ongoing" autocomplete="off" /></div>
+          <div class="form-group"><label for="pr-icon">Icon</label><input type="text" id="pr-icon" placeholder="e.g. 🖥️" autocomplete="off" style="font-size:1.4rem;width:80px;" /></div>
+          <div class="form-group"><label for="pr-url">URL</label><input type="url" id="pr-url" placeholder="https://…" autocomplete="off" /></div>
+          <div class="form-group"><label for="pr-desc">Description</label><textarea id="pr-desc" placeholder="What the project is about…"></textarea></div>
+          <div id="pr-status" style="font-size:0.8rem;min-height:1.2em;margin-bottom:0.5rem;"></div>
+          <button class="btn btn-primary" id="pr-save-btn" style="width:100%;">Save</button>
+        </div>
+      </div>
+
+      {/* Podcast modal */}
+      <div class="rl-modal" id="pod-modal" hidden>
+        <div class="rl-modal-backdrop" id="pod-modal-backdrop"></div>
+        <div class="rl-modal-inner">
+          <button class="rl-modal-close" id="pod-modal-close" aria-label="Close">&times;</button>
+          <p class="rl-modal-title" id="pod-modal-title">Add Podcast</p>
+          <div class="form-group"><label for="pod-name">Name</label><input type="text" id="pod-name" placeholder="e.g. Accidental Tech Podcast" autocomplete="off" /></div>
+          <div class="form-group"><label for="pod-author">Author</label><input type="text" id="pod-author" placeholder="e.g. Marco Arment" autocomplete="off" /></div>
+          <div class="form-group"><label for="pod-artwork">Artwork URL</label><input type="url" id="pod-artwork" placeholder="https://…" autocomplete="off" /></div>
+          <div class="form-group"><label for="pod-apple">Apple Podcasts URL</label><input type="url" id="pod-apple" placeholder="https://podcasts.apple.com/…" autocomplete="off" /></div>
+          <div class="form-group"><label for="pod-url">Website URL</label><input type="url" id="pod-url" placeholder="https://…" autocomplete="off" /></div>
+          <div class="form-group"><label for="pod-desc">Description</label><textarea id="pod-desc" placeholder="Why you listen…"></textarea></div>
+          <div id="pod-status" style="font-size:0.8rem;min-height:1.2em;margin-bottom:0.5rem;"></div>
+          <button class="btn btn-primary" id="pod-save-btn" style="width:100%;">Save</button>
+        </div>
+      </div>
+
     </Layout>
   );
 });
