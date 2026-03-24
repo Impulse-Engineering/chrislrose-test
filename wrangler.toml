@@ -5,7 +5,7 @@ main = "src/index.ts"
 [[d1_databases]]
 binding = "DB"
 database_name = "chrislrose-dev"
-database_id = "placeholder-create-with-wrangler"
+database_id = "1d8e81a7-58aa-4725-a469-4c8131e1a9b4"
 
 [assets]
 directory = "./public"
@@ -14,6 +14,4 @@ binding = "ASSETS"
 [vars]
 SITE_URL = "https://dev.chrislrose.aseva.ai"
 ASSET_VERSION = "20260323000000"
-# Admin credentials for auto-seed (dev only — use `wrangler secret put` for production)
-ADMIN_EMAIL = "admin@chrislrose.aseva.ai"
-ADMIN_PASSWORD = "changeme-dev-only"
+# ADMIN_EMAIL and ADMIN_PASSWORD are set via Conductor secrets (not in vars for security)
